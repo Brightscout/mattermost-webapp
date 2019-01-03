@@ -23,12 +23,12 @@ export const selectMeeting = (meeting) => {
     };
 };
 
-export const loadRecentMeetings = (uid, selectedMeeting) => (dispatch) => {
-    console.log("Loading recent meetings for dashboard", uid, selectedMeeting);
+export const loadRecentMeetings = (uid) => (dispatch) => {
     dispatch({
         type: DashboardActionTypes.DASHBOARD_FETCH_MEETINGS,
         status: 'loading',
     });
+
     return app.
         service('participants').
         find({query: {_id: uid}}).
@@ -56,15 +56,12 @@ export const loadRecentMeetings = (uid, selectedMeeting) => (dispatch) => {
                     (new Date(m.endTime).getTime() -
                         new Date(m.startTime).getTime()) /
                     1000;
-
-                //console.log("duration secs:", durationSecs)
                 return durationSecs > 2 * 60;
             });
+
             if (meetingObjects.length == 0) {
-                console.log('no meetings over 2 minutes');
                 throw new Error('no meetings after filter');
             }
-            console.log('meeting objs after duration filter:', meetingObjects);
             return meetingObjects;
 
             // dispatch(updateMeetingList(meetingObjects));
@@ -81,9 +78,6 @@ export const loadRecentMeetings = (uid, selectedMeeting) => (dispatch) => {
             });
         }).
         then(({meetings, pEvents}) => {
-            console.log('got pevents:', pEvents);
-            console.log('got meetings:', meetings);
-
             // only return meetings that have over 1 participant.
             const numParticipants = _.map(pEvents, (pe) => {
                 return _.uniq(
@@ -152,7 +146,7 @@ export const loadRecentMeetings = (uid, selectedMeeting) => (dispatch) => {
 };
 
 const processUtterances = (utterances, meetingId) => {
-    console.log('processing utterances:', utterances);
+//    console.log('processing utterances:', utterances);
 
     // {'participant': [utteranceObject, ...]}
     var participantUtterances = _.groupBy(utterances, 'participant');
@@ -433,7 +427,7 @@ export const loadMeetingData = (uid, meetingId) => (dispatch) => {
         service('utterances').
         find({query: {meeting: meetingId, $limit: 10000}}).
         then((utterances) => {
-            console.log('utterances', utterances);
+            console.log(">>>", meetingId, 'utterances', utterances);
             return {
                 processedUtterances: processUtterances(utterances, meetingId),
                 processedNetwork: processNetwork(uid, utterances, meetingId),
@@ -452,9 +446,11 @@ export const loadMeetingData = (uid, meetingId) => (dispatch) => {
 
             // dispatch processed network data
             processedNetwork.then((networkObj) => {
+                console.log("SENDING MEETINGID:", meetingId);
                 dispatch({
                     type: DashboardActionTypes.DASHBOARD_FETCH_MEETING_NETWORK,
                     status: 'loaded',
+                    meetingId,
                     networkData: networkObj,
                 });
             });
@@ -472,6 +468,7 @@ export const loadMeetingData = (uid, meetingId) => (dispatch) => {
                 dispatch({
                     type:
                     DashboardActionTypes.DASHBOARD_FETCH_MEETING_STATS,
+                    meetingId,
                     status: 'loaded',
                     processedUtterances,
                 });
@@ -502,6 +499,7 @@ export const loadMeetingData = (uid, meetingId) => (dispatch) => {
                 dispatch({
                     type: DashboardActionTypes.DASHBOARD_FETCH_MEETING_TIMELINE,
                     status: 'loaded',
+                    meetingId,
                     timelineData: processedTimeline,
                 });
             });

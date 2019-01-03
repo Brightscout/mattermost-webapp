@@ -1,21 +1,40 @@
 // Copyright (c) 2015-present Mattermost, Inc. All Rights Reserved.
 // See LICENSE.txt for license information.
 import {DashboardActionTypes} from 'utils/constants.jsx';
+import _ from 'underscore';
 
 const initialState = {
     numMeetings: 0,
     fetchMeetingsStatus: 'loading',
     fetchMeetingsMessage: 'loading',
-    meetings: [],
     lastFetched: new Date('January 1, 2000 00:01:00'),
     shouldFetch: true,
     numMeetings: 0,
-    selectedMeeting: null,
+    meetings: [],
+
+    timelineStatus: [],
+    statsStatus: [],
+    networkStatus: [],
+
     processedUtterances: [],
-    statsStatus: 'loading',
-    networkStatus: 'loading',
-    networkData: null,
+    networkData: [],
+    timelineData: [],
 };
+
+const getMeetingIndex = (meetings, meetingId) => {
+    let meetingIds = _.pluck(meetings, '_id');
+    return _.indexOf(meetingIds, meetingId);
+}
+
+const updateDataArray = (arr, idx, newData) => {
+    return [...arr.slice(0, idx), newData, ...arr.slice(idx+1)];
+}
+
+const updateArr = (state, arr, meetingId, newData) => {
+    let idx = getMeetingIndex(state, meetingId);
+    console.log("index of meeting", meetingId, "is:", idx);
+    return updateDataArray(arr, idx, newData);
+}
 
 const dashboard = (state = initialState, action) => {
     switch (action.type) {
@@ -38,31 +57,41 @@ const dashboard = (state = initialState, action) => {
                         1000 >
                     5 * 60,
         };
-    case DashboardActionTypes.DASHBOARD_SELECT_MEETING:
-        return {...state, selectedMeeting: action.meeting};
     case DashboardActionTypes.DASHBOARD_FETCH_MEETING_STATS:
         return {
             ...state,
-            statsStatus: action.status,
-            processedUtterances: action.processedUtterances ?
-                action.processedUtterances :
-                state.processedUtterances,
+            statsStatus: updateArr(state.meetings,
+                                   state.statsStatus,
+                                   action.meetingId,
+                                   action.status),
+            processedUtterances: updateArr(state.meetings,
+                                           state.processedUtterances,
+                                           action.meetingId,
+                                           action.processedUtterances)
         };
     case DashboardActionTypes.DASHBOARD_FETCH_MEETING_NETWORK:
         return {
             ...state,
-            networkStatus: action.status,
-            networkData: action.networkData ?
-                action.networkData :
-                state.networkData,
+            networkStatus: updateArr(state.meetings,
+                                     state.networkStatus,
+                                     action.meetingId,
+                                     action.status),
+            networkData: updateArr(state.meetings,
+                                   state.networkData,
+                                   action.meetingId,
+                                   action.networkData)
         };
     case DashboardActionTypes.DASHBOARD_FETCH_MEETING_TIMELINE:
         return {
             ...state,
-            timelineStatus: action.status,
-            timelineData: action.timelineData ?
-                action.timelineData :
-                state.timelineData,
+            timelineStatus: updateArr(state.meetings,
+                                      state.timelineStatus,
+                                      action.meetingId,
+                                      action.status),
+            timelineData: updateArr(state.meetings,
+                                    state.timelineData,
+                                    action.meetingId,
+                                    action.timelineData)
         };
     default:
         return state;
