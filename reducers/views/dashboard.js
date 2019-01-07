@@ -32,7 +32,7 @@ const updateDataArray = (arr, idx, newData) => {
 
 const updateArr = (state, arr, meetingId, newData) => {
     let idx = getMeetingIndex(state, meetingId);
-    console.log("index of meeting", meetingId, "is:", idx);
+    console.log("index of meeting", meetingId, "is:", idx, state.meetings);
     return updateDataArray(arr, idx, newData);
 }
 
@@ -58,17 +58,37 @@ const dashboard = (state = initialState, action) => {
                     5 * 60,
         };
     case DashboardActionTypes.DASHBOARD_FETCH_MEETING_STATS:
-        return {
-            ...state,
-            statsStatus: updateArr(state.meetings,
-                                   state.statsStatus,
-                                   action.meetingId,
-                                   action.status),
-            processedUtterances: updateArr(state.meetings,
-                                           state.processedUtterances,
+        if (state.meetings.length > 0) {
+            console.log("meeting state at 0 is:", state.meetings[0], state.meetings[0]._id, action)
+        }
+        if (action.status === 'loading') {
+            if (action.meeting === 'all') {
+                return {
+                    ...state,
+                    statsStatus: _.map(state.meetings, (m) => {return 'loading';})
+                }
+            } else {
+                return {
+                    ...state,
+                    statsStatus: updateArr(state.meetings,
+                                           state.statsStatus,
                                            action.meetingId,
-                                           action.processedUtterances)
-        };
+                                           action.status)
+                };
+            }
+        } else {
+            return {
+                ...state,
+                statsStatus: updateArr(state.meetings,
+                                       state.statsStatus,
+                                       action.meetingId,
+                                       action.status),
+                processedUtterances: updateArr(state.meetings,
+                                               state.processedUtterances,
+                                               action.meetingId,
+                                               action.processedUtterances)
+            };
+        }
     case DashboardActionTypes.DASHBOARD_FETCH_MEETING_NETWORK:
         return {
             ...state,

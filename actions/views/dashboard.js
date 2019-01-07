@@ -27,6 +27,7 @@ export const loadRecentMeetings = (uid) => (dispatch) => {
     dispatch({
         type: DashboardActionTypes.DASHBOARD_FETCH_MEETINGS,
         status: 'loading',
+        meeting: 'all'
     });
 
     return app.
@@ -62,6 +63,7 @@ export const loadRecentMeetings = (uid) => (dispatch) => {
             if (meetingObjects.length == 0) {
                 throw new Error('no meetings after filter');
             }
+            // fetch data for first meeting
             return meetingObjects;
 
             // dispatch(updateMeetingList(meetingObjects));
@@ -107,6 +109,8 @@ export const loadRecentMeetings = (uid) => (dispatch) => {
             dispatch(updateMeetingList(meetings));
             if (meetings.length > 0) {
                 const newSelectedMeeting = meetings[0];
+                console.log("meeting list is now:", meetings);
+                console.log("selected meeting is:", meetings[0]._id);
                 dispatch(selectMeeting(newSelectedMeeting));
                 dispatch(loadMeetingData(uid, newSelectedMeeting._id));
             }
@@ -464,7 +468,7 @@ export const loadMeetingData = (uid, meetingId) => (dispatch) => {
                     });
             });
             Promise.all(promises).then((processedUtterances) => {
-                console.log('processed utterances:', processedUtterances);
+                console.log('processed utterances:', processedUtterances, "for meeting ID", meetingId);
                 dispatch({
                     type:
                     DashboardActionTypes.DASHBOARD_FETCH_MEETING_STATS,

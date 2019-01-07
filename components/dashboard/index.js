@@ -61,7 +61,7 @@ const mapDispatchToProps = (dispatch) => ({
 });
 
 const formatMeetingDuration = (meeting) => {
-    if (meeting === null) {
+    if (!meeting || meeting === null) {
         return '';
     }
 
