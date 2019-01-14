@@ -25,10 +25,12 @@ export const selectMeeting = (meeting) => {
 
 export const loadRecentMeetings = (uid) => (dispatch) => {
     dispatch({
-        type: DashboardActionTypes.DASHBOARD_FETCH_MEETINGS,
-        status: 'loading',
-        meeting: 'all'
+        type: DashboardActionTypes.DASHBOARD_LOADING_ALL_MEETINGS,
     });
+
+    // set it to not re-fetch. This changes lastFetched to now
+    // we re-set this after the following block of code.
+    dispatch(updateMeetingList([]));
 
     return app.
         service('participants').
@@ -106,6 +108,10 @@ export const loadRecentMeetings = (uid) => (dispatch) => {
             meetings.sort(
                 (a, b) => /*descending*/ -cmpMeetingsByStartTime(a, b)
             );
+            
+            // limit to 10 to begin with
+            meetings = _.first(meetings, 10);
+
             dispatch(updateMeetingList(meetings));
             if (meetings.length > 0) {
                 const newSelectedMeeting = meetings[0];
@@ -114,21 +120,19 @@ export const loadRecentMeetings = (uid) => (dispatch) => {
                 dispatch(selectMeeting(newSelectedMeeting));
                 dispatch(loadMeetingData(uid, newSelectedMeeting._id));
             }
-
-            //return meetings;
         }).
         catch((err) => {
             if (err.message == 'no participant') {
                 dispatch({
-                    type: DashboardActionTypes.DASHBOARD_FETCH_MEETINGS,
-                    status: 'error',
+                    type: DashboardActionTypes.DASHBOARD_LOADING_ERROR,
+                    status: true,
                     message:
                         'No meetings found. Meetings that last for over two minutes will show up here.',
                 });
             } else if (err.message == 'no meetings after filter') {
                 dispatch({
-                    type: DashboardActionTypes.DASHBOARD_FETCH_MEETINGS,
-                    status: 'error',
+                    type: DashboardActionTypes.DASHBOARD_LOADING_ERROR,
+                    status: true,
                     message:
                         "We'll only show meetings that lasted for over two minutes. Go have a riff!",
                 });
@@ -136,15 +140,14 @@ export const loadRecentMeetings = (uid) => (dispatch) => {
                 err.message == 'no meetings after nparticipants filter'
             ) {
                 dispatch({
-                    type: DashboardActionTypes.DASHBOARD_FETCH_MEETINGS,
-                    status: 'error',
+                    type: DashboardActionTypes.DASHBOARD_LOADING_ERROR,
+                    status: true,
                     message:
                         'Only had meetings by yourself? Come back after some meetings with others to explore some insights.',
                 });
             } else {
-                // infinite loop?
                 console.log("Couldn't retrieve meetings", err);
-                dispatch(loadRecentMeetings(uid));
+                //dispatch(loadRecentMeetings(uid));
             }
         });
 };
@@ -253,124 +256,96 @@ const processUtterances = (utterances, meetingId) => {
     return a.startTime < b.startTime ? -1 : a.startTime > b.startTime ? 1 : 0;
 }
 
-// goal is to process and create a network of who follows whom
-// each node is a participant
-// each directed edge A->B indicates probability that B follows A.
-export const processNetwork = (uid, utterances, meetingId) => {
-    const participantUtterances = _.groupBy(utterances, 'participant');
-    const participants = Object.keys(participantUtterances);
-    const sortedUtterances = _.sortBy(utterances, (u) => {
-        return u.startTime;
-    });
+export const processInfluence = (uid, utterances, meetingId) => {
+  let participantUtterances = _.groupBy(utterances, 'participant');
+  let participants = Object.keys(participantUtterances);
+  let sortedUtterances = _.sortBy(utterances, (u) => { return u.startTime; });
 
-    let recentUttCounts = _.map(sortedUtterances, (ut, idx, l) => {
-        // get list of utterances within 2 seconds that are not by the speaker.
-        const recentUtterances = _.filter(
-            sortedUtterances.slice(0, idx),
-            (recentUt) => {
-                const recent =
-                    (new Date(ut.startTime).getTime() -
-                        new Date(recentUt.endTime).getTime()) /
-                        1000 <
-                    2;
-                const sameParticipant = ut.participant == recentUt.participant;
-                return recent && !sameParticipant;
-            }
-        );
-        if (recentUtterances.length > 0) {
-            return {
-                participant: ut.participant,
-                counts: _.countBy(recentUtterances, 'participant'),
-            };
+  let recentUttCounts = _.map(sortedUtterances, (ut, idx, l) => {
+    // get list of utterances within 2 seconds that are not by the speaker.
+    let recentUtterances = _.filter(sortedUtterances.slice(0, idx), (recentUt) => {
+      let timeDiff = ((new Date(ut.startTime).getTime() - new Date(recentUt.endTime).getTime())/1000);
+      let recent =  timeDiff < 3 && timeDiff > 0;
+      let sameParticipant = ut.participant == recentUt.participant;
+      return recent && !sameParticipant;
+    });
+    if (recentUtterances.length > 0) {
+      return {participant: ut.participant,
+              counts: _.countBy(recentUtterances, 'participant')};
+    } else {
+      return false;
+    }
+  });
+
+  recentUttCounts = _.compact(recentUttCounts);
+  console.log("recent utt counts:", recentUttCounts);
+
+  // create object with the following format:
+  // {participantId: {participantId: Count, participantId: Count, ...}}
+  let aggregatedCounts = _.reduce(recentUttCounts, (memo, val, idx, l) => {
+    if (!memo[val.participant]) {
+      memo[val.participant] = val.counts;
+    } else {
+      // update count object that's stored in memo, adding new
+      // keys as we need to.
+      // obj here should be an object of {participantId: nUtterances}
+      let obj = memo[val.participant];
+      _.each(_.pairs(val.counts), (pair) => {
+        if (!obj[pair[0]]) {
+          obj[pair[0]] = pair[1];
+        } else {
+          obj[pair[0]] += pair[1];
         }
-        return false;
+      });
+      memo[val.participant] = obj;
+    }
+    return memo;
+  }, {});
+
+  // limit to only the current user
+  //aggregatedCounts = aggregatedCounts[uid];
+
+  let finalEdges = [];
+  let edges = _.each(_.pairs(aggregatedCounts), (obj, idx) => {
+    let participant = obj[0];
+    _.each(_.pairs(obj[1]), (o) => {
+      let toAppend = {source: participant, target: o[0], size: o[1]};
+      finalEdges.push(toAppend);
     });
+  });
 
-    recentUttCounts = _.compact(recentUttCounts);
-    console.log('recent utt counts:', recentUttCounts);
 
-    // create object with the following format:
-    // {participantId: {participantId: Count, participantId: Count, ...}}
-    const aggregatedCounts = _.reduce(
-        recentUttCounts,
-        (memo, val, idx, l) => {
-            if (!memo[val.participant]) {
-                memo[val.participant] = val.counts;
-            } else {
-                // update count object that's stored in memo, adding new
-                // keys as we need to.
-                // obj here should be an object of {participantId: nUtterances}
-                const obj = memo[val.participant];
-                _.each(_.pairs(val.counts), (pair) => {
-                    if (!obj[pair[0]]) {
-                        obj[pair[0]] = pair[1];
-                    } else {
-                        obj[pair[0]] += pair[1];
-                    }
-                });
-                memo[val.participant] = obj;
-            }
-            return memo;
-        },
-        {}
-    );
+  finalEdges = _.map(finalEdges, (e, idx) => { return { ...e,
+                                                        id: "e" + idx,
+                                                        size: e.size}});
+  // filter any edges under 0.2 weight
+  //finalEdges = _.filter(finalEdges, (e) => { return !(e.size < 0.1*sizeMultiplier); });
+  let nodes = _.map(participants, (p, idx) => { return {id: p}; });
+  nodes = _.sortBy(nodes, "id");
 
-    // limit to only the current user
-    //aggregatedCounts = aggregatedCounts[uid];
+  let barLabels = {}
+  let promises = _.map(nodes, (n) => {
+    return app.service('participants').get(n.id)
+      .then((res) => {
+        barLabels[n.id] = res.name;
+        return {...n,
+                label: res.name};
+      });
+  });
 
-    let finalEdges = [];
-    const edges = _.each(_.pairs(aggregatedCounts), (obj, idx) => {
-        const participant = obj[0];
-        _.each(_.pairs(obj[1]), (o) => {
-            const toAppend = {source: participant, target: o[0], size: o[1]};
-            finalEdges.push(toAppend);
-        });
-    });
-
-    // make edge sizes between 0 and 1, and then multiply by sizeMultiplier
-    const maxEdgeSize = _.max(finalEdges, (e) => {
-        return e.size;
-    }).size;
-    const sizeMultiplier = 15;
+  return Promise.all(promises).then(values => {
     finalEdges = _.map(finalEdges, (e, idx) => {
-        return {
-            ...e,
-            id: 'e' + idx,
-            size: (e.size / maxEdgeSize) * sizeMultiplier,
-        };
+      return {...e,
+              targetName: barLabels[e.target],
+              sourceName: barLabels[e.source]
+             };
+      
     });
+    return finalEdges;
 
-    // filter any edges under 0.2 weight
-    finalEdges = _.filter(finalEdges, (e) => {
-        return !(e.size < 0.1 * sizeMultiplier);
-    });
-    let nodes = _.map(participants, (p, idx) => {
-        return {
-            id: p,
-            size: 20,
-        };
-    });
-
-    // sort them for consistent colors
-    nodes = _.sortBy(nodes, 'id');
-    console.log('nodes', nodes, 'edges', finalEdges);
-
-    const promises = _.map(nodes, (n) => {
-        return app.
-            service('participants').
-            get(n.id).
-            then((res) => {
-                return {...n, label: res.name};
-            });
-    });
-
-    return Promise.all(promises).then((values) => {
-        return {
-            nodes: values,
-            edges: finalEdges,
-        };
-    });
+  });
 };
+
 
 export const processTimeline = (uid, utterances, meetingId) => {
     const participantUtterances = _.groupBy(utterances, 'participant');
@@ -423,8 +398,9 @@ export const processTimeline = (uid, utterances, meetingId) => {
 export const loadMeetingData = (uid, meetingId) => (dispatch) => {
     console.log("loading meeting data:", uid, meetingId);
     dispatch({
-        type: DashboardActionTypes.DASHBOARD_FETCH_MEETING_STATS,
+        type: DashboardActionTypes.DASHBOARD_MEETING_LOAD_STATUS,
         status: 'loading',
+        meetingId
     });
     console.log('finding utterances for meeting', meetingId);
     return app.
@@ -434,29 +410,24 @@ export const loadMeetingData = (uid, meetingId) => (dispatch) => {
             console.log(">>>", meetingId, 'utterances', utterances);
             return {
                 processedUtterances: processUtterances(utterances, meetingId),
-                processedNetwork: processNetwork(uid, utterances, meetingId),
+                processedInfluence: processInfluence(uid, utterances, meetingId),
                 processedTimeline: processTimeline(uid, utterances, meetingId),
             };
         }).
-        then(({processedUtterances, processedNetwork, processedTimeline}) => {
+        then(({processedUtterances, processedInfluence, processedTimeline}) => {
             console.log(
                 'utterances:',
                 processedUtterances,
-                'network:',
-                processedNetwork,
+                'influence:',
+                processedInfluence,
                 "timeline:",
                 processedTimeline
             );
 
-            // dispatch processed network data
-            processedNetwork.then((networkObj) => {
-                console.log("SENDING MEETINGID:", meetingId);
-                dispatch({
-                    type: DashboardActionTypes.DASHBOARD_FETCH_MEETING_NETWORK,
-                    status: 'loaded',
-                    meetingId,
-                    networkData: networkObj,
-                });
+            processedInfluence.then((influenceObj) => {
+                dispatch({type: DashboardActionTypes.DASHBOARD_FETCH_MEETING_INFLUENCE,
+                          meetingId,
+                          influenceData: influenceObj});
             });
 
             const promises = _.map(processedUtterances, (u) => {
@@ -471,9 +442,8 @@ export const loadMeetingData = (uid, meetingId) => (dispatch) => {
                 console.log('processed utterances:', processedUtterances, "for meeting ID", meetingId);
                 dispatch({
                     type:
-                    DashboardActionTypes.DASHBOARD_FETCH_MEETING_STATS,
+                    DashboardActionTypes.DASHBOARD_FETCH_MEETING_UTTERANCES,
                     meetingId,
-                    status: 'loaded',
                     processedUtterances,
                 });
             });
@@ -499,16 +469,16 @@ export const loadMeetingData = (uid, meetingId) => (dispatch) => {
             // });
 
             processedTimeline.then((processedTimeline) => {
-                console.log('processed timeline:', processedTimeline);
+//                console.log('processed timeline:', processedTimeline);
                 dispatch({
                     type: DashboardActionTypes.DASHBOARD_FETCH_MEETING_TIMELINE,
-                    status: 'loaded',
                     meetingId,
                     timelineData: processedTimeline,
                 });
             });
         }).
         catch((err) => {
+            // re-call load meeting here?
             console.log("couldn't retrieve meeting data", err);
         });
 };

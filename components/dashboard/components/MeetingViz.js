@@ -70,6 +70,28 @@ const mapDispatchToProps = (dispatch) => ({
     }
 });
 
+const Header = (props) => {
+    console.log("HEADER props:", props)
+    let meetingDate = moment(props.meeting.startTime).format("ha MMM Do");
+    return (
+        <div
+          className=''
+          style={{paddingBottom: '2rem',
+                  paddingTop: '1rem',
+          paddingLeft: '1rem'}}>
+          <h3>Meeting at: {meetingDate} </h3>
+          <SpaceBetweeen>
+            <span> Attendees: {props.processedUtterances.length}</span>
+          </SpaceBetweeen>
+          <SpaceBetweeen>
+            <span> Duration: {props.selectedMeetingDuration} </span>
+          </SpaceBetweeen>
+          <div className='column is-half has-text-left'>
+          </div>
+        </div>
+    );
+};
+
 class MeetingViz extends React.PureComponent {
     static propTypes = {
         processedUtterances: PropTypes.array.isRequired,
@@ -91,47 +113,34 @@ class MeetingViz extends React.PureComponent {
 
         // only load if the data hasn't been loaded yet.
         if (!this.props.loaded) {
-            console.log("MEETING NOT LOADED; LOADING MEETING", props.meeting._id);
             props.loadMeetingData(props.user.id, props.meeting._id);
         }
     }
 
+
     render() {
-        let meetingDate = moment(this.props.meeting.startTime).format("ha MMM Do");
         return (
             <div>
-                <div
-                  className=''
-                  style={{paddingBottom: '2rem',
-                          paddingTop: '1rem',
-                  paddingLeft: '1rem'}}>
-                  <h3>Meeting at: {meetingDate} </h3>
-                  <SpaceBetweeen>
-                    <span> Attendees: {this.props.processedUtterances.length}</span>
-                  </SpaceBetweeen>
-                  <SpaceBetweeen>
-                    <span> Duration: {this.props.selectedMeetingDuration} </span>
-                  </SpaceBetweeen>
-                  <div className='column is-half has-text-left'>
-
-                  </div>
-                </div>
+              <Header {...this.props}/>
                 <div className="columns is-centered" style={{marginLeft: "3rem"}}>
                   <div className="column" style={{paddingBottom: "0px"}}>
                     <div className="columns is-centered">
                         <div className="column is-one-third has-text-centered is-centered"
                                style={{alignItems: 'center', display: 'flex'}}>
                           <TurnChart processedUtterances={this.props.processedUtterances}
+                                     loaded={this.props.loaded}
                                      participantId={this.props.user.id}/>
                       </div>
                         <div className="column is-two-thirds has-text-left">
                           <InfluenceChart influenceType={"mine"}
                                           processedInfluence={this.props.influenceData}
+                                          loaded={this.props.loaded}
                                           participantId={this.props.user.id}/>
                               <div className="columns">
                                   <div className="column" >
                                     <InfluenceChart influenceType={"theirs"}
                                                     processedInfluence={this.props.influenceData}
+                                                    loaded={this.props.loaded}
                                                     participantId={this.props.user.id}/>
                                     </div>
                               </div>
@@ -139,7 +148,6 @@ class MeetingViz extends React.PureComponent {
                       </div>
 
                     <div className="section" style={{padding: "0px"}}>
-
 
                     </div>
                   </div>

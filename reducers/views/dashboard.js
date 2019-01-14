@@ -17,6 +17,7 @@ const initialState = {
     // 'loaded' at idx if utterances, influence, and timeline are all loaded
     statsStatus: [],
 
+    // array holding processed data for each meeting. 
     processedUtterances: [],
     influenceData: [],
     timelineData: []

@@ -49,46 +49,55 @@ const chartInfo =
 equal speaking time across all members is associated with higher creativity, more trust between \
 group members, and better brainstorming.';
 
-const TurnChart = ({processedUtterances, participantId}) => {
-    const r = formatChartData(processedUtterances, participantId);
-    console.log('data for chart:', r.data);
+const TurnChart = ({processedUtterances, participantId, loaded}) => {
 
-    const chartOptions = {
-        tooltips: {
-            callbacks: {
-                label(tooltipItem, data) {
-                    const label = data.labels[tooltipItem.index] || '';
-                    let seconds =
-                        data.datasets[tooltipItem.datasetIndex].data[
-                            tooltipItem.index
-                        ] || -1;
-                    const minutes = Math.trunc(seconds / 60);
-                    seconds = Math.round(seconds % 60);
 
-                    const tooltip = `${label}${
+    var chartDiv;
+    if (loaded) {
+        const r = formatChartData(processedUtterances, participantId);
+        console.log('data for chart:', r.data);
+
+        const chartOptions = {
+            tooltips: {
+                callbacks: {
+                    label(tooltipItem, data) {
+                        const label = data.labels[tooltipItem.index] || '';
+                        let seconds =
+                            data.datasets[tooltipItem.datasetIndex].data[
+                                tooltipItem.index
+                            ] || -1;
+                        const minutes = Math.trunc(seconds / 60);
+                        seconds = Math.round(seconds % 60);
+
+                        const tooltip = `${label}${
                         label ? ': ' : ''
                     }${minutes}m ${seconds}s`;
-                    return tooltip;
+                        return tooltip;
+                    },
                 },
             },
-        },
-    };
+        };
 
-    const chartDiv = (
-        <PieChart
-            donut={true}
-            library={chartOptions}
-            data={r.data}
-            colors={r.colors}
-            height='25vw'
-            width='25vw'
-        />
+        chartDiv = (
+            <PieChart
+              donut={true}
+              library={chartOptions}
+              data={r.data}
+              colors={r.colors}
+              height='25vw'
+              width='25vw'
+              />
+        );
+    }
+
+    const loadingDiv = (
+        <ScaleLoader color={'#8A6A94'}/>
     );
 
     return (
         <ChartCard
             title='Speaking Time'
-            chartDiv={chartDiv}
+            chartDiv={loaded ? chartDiv : loadingDiv}
             chartInfo={chartInfo}
         />
     );

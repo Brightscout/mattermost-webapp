@@ -87,7 +87,7 @@ const chartInfo =
 // processedUtterances: [list of utterances...]
 // participants: [{id, name, ...}, ...]
 const TimelineView = (props) => {
-    console.log("timeline props:", props, props.processedTimeline.utts);
+    console.log("timeline props:", props, props); 
     const chartDiv = <div id='gantt'/>;
     return (
         <React.Fragment>

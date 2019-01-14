@@ -37,6 +37,7 @@ const mapStateToProps = (state) => {
         statsStatus: riffState.statsStatus,
         processedNetwork: riffState.networkData,
         processedTimeline: riffState.timelineData,
+        loadingError: riffState.loadingError
     };
 };
 

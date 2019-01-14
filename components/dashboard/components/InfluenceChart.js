@@ -69,120 +69,129 @@ function formatLabel(str, maxwidth){
 }
 
 const addColorsToData = (influenceData, participantId, influenceType) => {
-  let otherUsers = _.map(_.filter(influenceData, (n) =>
-                                  {
-                                    return influenceType == 'mine' ?
-                                      n.target != participantId :
-                                      n.source != participantId;
-                                  }),
-                         (n, idx) => {
-                           n.color = peerColors[idx];
-                           return n;
-                         });
-  return otherUsers;
+    let otherUsers = _.map(_.filter(influenceData, (n) =>
+                                    {
+                                        return influenceType == 'mine' ?
+                                            n.target != participantId :
+                                            n.source != participantId;
+                                    }),
+                           (n, idx) => {
+                               n.color = peerColors[idx];
+                               return n;
+                           });
+    return otherUsers;
 };
 
 // either 'mine' or 'theirs'
 const getLabelsAndData = (uid, influenceType, influenceData) => {
-  let res = _.filter(influenceData, (n) => {
-    console.log(n.target, n.target == uid);
-    if (influenceType == 'theirs') {
-      return n.source == uid;
-    } else {
-      return n.target == uid;
-    }
-  });
-  console.log("influence type, res", uid, influenceType, res);
-  let sortedRes = _.sortBy(res, (n) => { return -n.size });
-  let labels = _.map(sortedRes, (n) => { return influenceType == 'theirs' ? n.targetName : n.sourceName;});
-  let data = _.map(sortedRes, (n) => { return n.size});
-  return {labels,data};
+    let res = _.filter(influenceData, (n) => {
+        console.log(n.target, n.target == uid);
+        if (influenceType == 'theirs') {
+            return n.source == uid;
+        } else {
+            return n.target == uid;
+        }
+    });
+    console.log("influence type, res", uid, influenceType, res);
+    let sortedRes = _.sortBy(res, (n) => { return -n.size });
+    let labels = _.map(sortedRes, (n) => { return influenceType == 'theirs' ? n.targetName : n.sourceName;});
+    let data = _.map(sortedRes, (n) => { return n.size});
+    return {labels,data};
 }
 
 
 
 const transformDataForBarChart = (rawLabels,data) => {
-  console.log("using labels and data:", rawLabels, data)
-  var labels = _.map(rawLabels, (l) => { return formatLabel(l, 10)});
-  return {
-    labels,
-    datasets: [
-      {
-        label: 'Responses',
-        backgroundColor: 'rgba(255,99,132,0.2)',
-        borderColor: 'rgba(255,99,132,1)',
-        borderWidth: 0.5,
-        hoverBackgroundColor: 'rgba(255,99,132,0.4)',
-        hoverBorderColor: 'rgba(255,99,132,1)',
-        data,
-      }
-    ]
-  };
+    console.log("using labels and data:", rawLabels, data)
+    var labels = _.map(rawLabels, (l) => { return formatLabel(l, 10)});
+    return {
+        labels,
+        datasets: [
+            {
+                label: 'Responses',
+                backgroundColor: 'rgba(255,99,132,0.2)',
+                borderColor: 'rgba(255,99,132,1)',
+                borderWidth: 0.5,
+                hoverBackgroundColor: 'rgba(255,99,132,0.4)',
+                hoverBorderColor: 'rgba(255,99,132,1)',
+                data,
+            }
+        ]
+    };
 };
 
 const options = {
-  legend: {
-    display: false
-  },
-  scales: {
-    yAxes: [
-      {
-        gridLines: {display: false}, 
-      }
-    ],
-    xAxes: [
-      {
-        ticks: {
-          beginAtZero: true,
-            stepSize: 1,
-            autoSkip: true,
-            maxTicksLimit: 10
-        }
-      }
-    ],
-    gridLines: {display: false} 
-  }
+    legend: {
+        display: false
+    },
+    scales: {
+        yAxes: [
+            {
+                gridLines: {display: false}, 
+            }
+        ],
+        xAxes: [
+            {
+                ticks: {
+                    beginAtZero: true,
+                    stepSize: 1,
+                    autoSkip: true,
+                    maxTicksLimit: 10
+                }
+            }
+        ],
+        gridLines: {display: false} 
+    }
 
 };
 
 
 const getBarGraph = (influenceType, BarGraphData, options) => {
-  if (BarGraphData.labels.length > 0) {
-    return (
-      <div style={{padding: "1rem"}}>
-        <HorizontalBar data={BarGraphData}
-                       options={options}/>
-      </div>
-    );
-  } else {
-    let emptyText = influenceType == "mine" ? "It doesn't look like you responded quickly to anyone in this meeting." : "It doesn't look like anyone responded to you quickly in this meeting.";
-    return (
-      <div>
-        <p style={{margin: "3rem"}}>{emptyText}</p>
-      </div>);
-  }
+    if (BarGraphData.labels.length > 0) {
+        return (
+            <div style={{padding: "1rem"}}>
+              <HorizontalBar data={BarGraphData}
+                             options={options}/>
+            </div>
+        );
+    } else {
+        let emptyText = influenceType == "mine" ? "It doesn't look like you responded quickly to anyone in this meeting." : "It doesn't look like anyone responded to you quickly in this meeting.";
+        return (
+            <div>
+              <p style={{margin: "3rem"}}>{emptyText}</p>
+            </div>);
+    }
 };
 
 const chartInfoMine = "This graph shows how many times each person spoke first after you finished speaking. Frequent first-responses indicate that a person is engaged by what you have to say.";
 const chartInfoTheirs = "This graph shows how many times you spoke first after another person finished speaking. Frequent first-responses indicate that you are engaged by what another person is saying.";
-const BarChart = ({processedInfluence, participantId, influenceType}) => {
-  //processedInfluence = addColorsToData(processedInfluence, participantId);
-  let labelsAndData = getLabelsAndData(participantId, influenceType, processedInfluence);
-  console.log("influence labels and data,", influenceType, labelsAndData)
+const BarChart = ({processedInfluence, participantId, influenceType, loaded}) => {
+    //processedInfluence = addColorsToData(processedInfluence, participantId);
 
-  let BarGraphData = transformDataForBarChart(labelsAndData.labels, labelsAndData.data);
-  const BarGraph = getBarGraph(influenceType, BarGraphData, options);
-  const chartTitle = influenceType == 'mine' ? 'Who You Influenced' : 'Who Influenced You';
-  const chartInfoText = influenceType == 'mine' ? chartInfoMine : chartInfoTheirs;
+    const chartTitle = influenceType == 'mine' ? 'Who You Influenced' : 'Who Influenced You';
+    const chartInfoText = influenceType == 'mine' ? chartInfoMine : chartInfoTheirs;
 
-  return (
-    <ChartCard
-      title={chartTitle}
-      maxWidth={33}
-      chartDiv={BarGraph}
-      chartInfo={chartInfoText}>
-    </ChartCard>
-  );
+    const loadingDiv = (
+        <ScaleLoader color={'#8A6A94'}/>
+    );
+
+    var BarGraph;
+    if (loaded) {
+        let labelsAndData = getLabelsAndData(participantId, influenceType, processedInfluence);
+        console.log("influence labels and data,", influenceType, labelsAndData)
+
+        let BarGraphData = transformDataForBarChart(labelsAndData.labels, labelsAndData.data);
+        BarGraph = getBarGraph(influenceType, BarGraphData, options);
+    }
+
+    return (
+        <ChartCard
+          title={chartTitle}
+          maxWidth={33}
+          chartDiv={loaded ? BarGraph : loadingDiv}
+          chartInfo={chartInfoText}>
+        </ChartCard>
+    );
 };
 
 export default BarChart;
