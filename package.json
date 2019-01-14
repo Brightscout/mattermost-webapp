@@ -59,6 +59,7 @@
     "react": "16.4.2",
     "react-addons-pure-render-mixin": "15.6.2",
     "react-bootstrap": "0.32.3",
+    "react-chartjs-2": "^2.7.4",
     "react-chartkick": "^0.3.0",
     "react-chat-widget": "^2.1.4-1",
     "react-color": "2.14.1",

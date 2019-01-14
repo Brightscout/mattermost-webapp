@@ -9,7 +9,9 @@ import {ScaleLoader} from 'react-spinners';
 import MaterialIcon from 'material-icons-react';
 import Chart from 'chart.js';
 import moment from 'moment';
+import _ from 'underscore';
 
+import MeetingViz from './components/MeetingViz';
 import TurnChart from './components/TurnChart';
 import NetworkChart from './components/NetworkChart';
 import TimelineChart from './components/TimelineChart';
@@ -42,78 +44,9 @@ const MeetingTabs = styled.div.attrs({
 
 // All dispatches were ripped out re-copy back in once server is working
 
-const MeetingView = ({uid, meeting, selected}) => {
-    const m = moment(meeting.startTime).format('ha MMM Do');
-    return (
-        <a onClick={(event) => handleMeetingClick(event, uid, meeting)}>
-          <div className='timeline-item'>
-            <div className='timeline-marker is-image is-32x32'>
-              <MaterialIcon
-                icon='voice_chat'
-                size={20}
-
-                // color={selected ? '#ab45ab' : '#bdc3c7'}
-                style={{
-                    marginLeft: '0.25rem',
-                    marginTop: '0.25rem',
-                    paddingLeft: '0.05rem',
-                    paddingTop: '0.1rem',
-                    fontSize: '1.3rem',
-                }}
-                />
-            </div>
-
-            <div className='timeline-content'>
-              <span className={selected ? 'heading selected' : 'heading'}>
-                <p>{m}</p>
-                <p/>
-              </span>
-            </div>
-          </div>
-        </a>
-    );
-};
-
-const MeetingList = ({
-    uid,
-    fetchMeetingsStatus,
-    fetchMeetingsMessage,
-    meetings,
-    selectedMeeting,
-    handleMeetingClick,
-}) => {
-    const meetingTiles = meetings.map((meeting) => {
-        return (
-            <MeetingView
-              key={meeting._id}
-              uid={uid}
-              meeting={meeting}
-              selected={
-                  selectedMeeting !== null &&
-                      meeting._id === selectedMeeting._id
-              }
-              handleMeetingClick={handleMeetingClick}
-              />
-        );
-    });
-    return (
-        <MeetingTabs>
-          <div
-            className='timeline-header'
-            style={{minHeight: '2em'}}
-            >
-            <span className='tag is-medium is-inverted is-primary'>
-              Today
-            </span>
-          </div>
-          {meetingTiles}
-        </MeetingTabs>
-    );
-};
-
 const DashboardView = (props) => {
     console.log("dashboard view props:", props);
-    if (props.fetchMeetingsStatus === 'loading') {
+    if (props.loadingStatus) {
         return (
             <div className='columns is-centered has-text-centered'>
               <div className='column'>
@@ -121,7 +54,7 @@ const DashboardView = (props) => {
               </div>
             </div>
         );
-    } else if (props.fetchMeetingsStatus === 'error') {
+    } else if (props.loadingError.status) {
         return (
             <div
               className='columns is-centered has-text-centered is-vcentered'
@@ -132,7 +65,7 @@ const DashboardView = (props) => {
                 style={{alignItems: 'center'}}
                 >
                 <p className='is-size-4 is-primary'>
-                  {props.fetchMeetingsMessage}
+                  {props.loadingError.message}
                 </p>
                 <ScaleLoader color={'#8A6A94'}/>
               </div>
@@ -140,6 +73,11 @@ const DashboardView = (props) => {
         );
     }
     // marginLeft on column is a quick fix until we fix the styling on this ugly page.
+    const meetingVisualizations = _.map(_.first(props.meetings, 4), (m) => {
+        return (
+            <MeetingViz key={m.id} meeting={m} user={props.user}/>
+        )
+    });
     return (
         <div
           className='app__content'
@@ -151,33 +89,7 @@ const DashboardView = (props) => {
               </div>
           ) : (
               <div>
-                <div
-                  className=''
-                  style={{paddingBottom: '2rem',
-                          paddingTop: '1rem',
-                  paddingLeft: '1rem'}}>
-                  <h3>Room: {props.meetings[0].room} </h3>
-                  <SpaceBetweeen>
-                    <span> Attendees </span>
-                    
-                  </SpaceBetweeen>
-                  <SpaceBetweeen>
-                    <span> Duration </span>
-                    {props.meetings[0].startTime}
-                  </SpaceBetweeen>
-                  <div className='column is-half has-text-left'>
-
-                  </div>
-                </div>
-                <div className="columns is-centered">
-                  <div className="column" style={{marginLeft: "33%"}}>
-                    <TurnChart
-                      processedUtterances={props.processedUtterances[0]}
-                      participantId={props.user.id}
-                      />
-                  </div>
-                </div>
-
+                {meetingVisualizations}
               </div>
           )}
         </div>
