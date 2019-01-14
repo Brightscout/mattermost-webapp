@@ -81,7 +81,6 @@ const DashboardView = (props) => {
     return (
         <div
           className='app__content'
-          style={{overflowY: 'scroll'}}
           >
           {props.statsStatus === 'loading' ? (
               <div>

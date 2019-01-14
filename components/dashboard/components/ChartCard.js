@@ -36,7 +36,7 @@ const WidthCard = (maxWidth) => {
     })`
         display: flex;
         flex-direction: column;
-        padding: 2rem;
+        padding: 1rem;
         max-width: ${(props) => maxWidth + 'vw'};
         box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.24);
     `;

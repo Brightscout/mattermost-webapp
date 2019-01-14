@@ -84,8 +84,8 @@ const TurnChart = ({processedUtterances, participantId, loaded}) => {
               library={chartOptions}
               data={r.data}
               colors={r.colors}
-              height='25vw'
-              width='25vw'
+              height='250px'
+              width='100%'
               />
         );
     }
@@ -96,9 +96,10 @@ const TurnChart = ({processedUtterances, participantId, loaded}) => {
 
     return (
         <ChartCard
-            title='Speaking Time'
-            chartDiv={loaded ? chartDiv : loadingDiv}
-            chartInfo={chartInfo}
+          title='Speaking Time'
+          chartDiv={loaded ? chartDiv : loadingDiv}
+          chartInfo={chartInfo}
+          maxWidth="55vw"
         />
     );
 };

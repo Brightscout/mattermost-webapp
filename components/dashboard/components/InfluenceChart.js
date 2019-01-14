@@ -158,7 +158,7 @@ const getBarGraph = (influenceType, BarGraphData, options) => {
         let emptyText = influenceType == "mine" ? "It doesn't look like you responded quickly to anyone in this meeting." : "It doesn't look like anyone responded to you quickly in this meeting.";
         return (
             <div>
-              <p style={{margin: "3rem"}}>{emptyText}</p>
+              <p style={{margin: "1.5rem"}}>{emptyText}</p>
             </div>);
     }
 };
@@ -187,7 +187,7 @@ const BarChart = ({processedInfluence, participantId, influenceType, loaded}) =>
     return (
         <ChartCard
           title={chartTitle}
-          maxWidth={33}
+          maxWidth={100}
           chartDiv={loaded ? BarGraph : loadingDiv}
           chartInfo={chartInfoText}>
         </ChartCard>

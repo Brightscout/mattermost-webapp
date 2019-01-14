@@ -117,26 +117,29 @@ class MeetingViz extends React.PureComponent {
         }
     }
 
-
     render() {
         return (
             <div>
               <Header {...this.props}/>
-                <div className="columns is-centered" style={{marginLeft: "3rem"}}>
+              <div className="columns is-centered" style={{marginLeft: "2rem", marginRight: "1rem"}}>
                   <div className="column" style={{paddingBottom: "0px"}}>
-                    <div className="columns is-centered">
-                        <div className="column is-one-third has-text-centered is-centered"
+                    <div className="columns is-centered is-hidden-touch">
+                        <div className="column is-half has-text-centered is-centered"
                                style={{alignItems: 'center', display: 'flex'}}>
                           <TurnChart processedUtterances={this.props.processedUtterances}
                                      loaded={this.props.loaded}
                                      participantId={this.props.user.id}/>
                       </div>
-                        <div className="column is-two-thirds has-text-left">
+                        <div className="column is-half is-centered">
+                          <div className="columns is-desktop is-pulled-right">
+                            <div className="column" >
                           <InfluenceChart influenceType={"mine"}
                                           processedInfluence={this.props.influenceData}
                                           loaded={this.props.loaded}
                                           participantId={this.props.user.id}/>
-                              <div className="columns">
+                            </div>
+                            </div>
+                              <div className="columns is-pulled-right">
                                   <div className="column" >
                                     <InfluenceChart influenceType={"theirs"}
                                                     processedInfluence={this.props.influenceData}
@@ -145,7 +148,47 @@ class MeetingViz extends React.PureComponent {
                                     </div>
                               </div>
                           </div>
+                    </div>
+                    <div className="columns is-hidden-desktop is-multiline is-centered">
+                      <div className="column has-text-centered is-centered">
+                          <TurnChart processedUtterances={this.props.processedUtterances}
+                                     loaded={this.props.loaded}
+                                     participantId={this.props.user.id}/>
+                        </div>
+
+                      <div className="column">
+                      <div className="columns is-multiline is-hidden-mobile">
+                        <div className="column is-half has-text-centered is-centered">
+                          <InfluenceChart influenceType={"mine"}
+                                          processedInfluence={this.props.influenceData}
+                                          loaded={this.props.loaded}
+                                          participantId={this.props.user.id}/>
+                        </div>
+                        <div className="column is-half has-text-centered is-centered">
+                          <InfluenceChart influenceType={"theirs"}
+                                          processedInfluence={this.props.influenceData}
+                                          loaded={this.props.loaded}
+                                          participantId={this.props.user.id}/>
+                        </div>
                       </div>
+                      <div className="columns is-multiline is-hidden-tablet">
+                        <div className="column has-text-centered is-centered">
+                          <InfluenceChart influenceType={"mine"}
+                                          processedInfluence={this.props.influenceData}
+                                          loaded={this.props.loaded}
+                                          participantId={this.props.user.id}/>
+                        </div>
+                        <div className="column has-text-centered is-centered">
+                          <InfluenceChart influenceType={"theirs"}
+                                          processedInfluence={this.props.influenceData}
+                                          loaded={this.props.loaded}
+                                          participantId={this.props.user.id}/>
+                        </div>
+                      </div>
+                      </div>
+                      
+                    </div>
+                  </div>
 
                     <div className="section" style={{padding: "0px"}}>
 
@@ -153,7 +196,6 @@ class MeetingViz extends React.PureComponent {
                   </div>
                 </div>
 
-                </div>
         );
     }
 }
