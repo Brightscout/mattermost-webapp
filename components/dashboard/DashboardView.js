@@ -75,7 +75,7 @@ const DashboardView = (props) => {
     // marginLeft on column is a quick fix until we fix the styling on this ugly page.
     const meetingVisualizations = _.map(_.first(props.meetings, 4), (m) => {
         return (
-            <MeetingViz key={m.id} meeting={m} user={props.user}/>
+            <MeetingViz key={m._id} meeting={m} user={props.user}/>
         )
     });
     return (
@@ -87,7 +87,7 @@ const DashboardView = (props) => {
                 <ScaleLoader color={'#8pA6A94'}/>
               </div>
           ) : (
-              <div>
+              <div style={{overflowY: 'scroll'}}>
                 {meetingVisualizations}
               </div>
           )}

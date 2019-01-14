@@ -2,7 +2,7 @@
 // See LICENSE.txt for license information.
 import d3 from 'utils/libs/d3';
 
-const Gantt = function() {
+const Gantt = function(selector) {
     var FIT_TIME_DOMAIN_MODE = 'fit';
     var FIXED_TIME_DOMAIN_MODE = 'fixed';
 
@@ -12,7 +12,7 @@ const Gantt = function() {
         bottom: 20,
         left: 50,
     };
-    var selector = '#gantt';
+    var selector = selector;
     var timeDomainStart = d3.timeDay.offset(new Date(), -3);
     var timeDomainEnd = d3.timeHour.offset(new Date(), +3);
     var timeDomainMode = FIT_TIME_DOMAIN_MODE; // fixed or fit

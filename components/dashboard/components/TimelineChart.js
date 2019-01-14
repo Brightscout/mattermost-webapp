@@ -29,6 +29,7 @@ const colorOther = '#bdc3c7';
 const peerColors = ['#f56b6b', '#128EAD', '#7caf5f', '#f2a466'];
 
 const drawGantt = (props) => {
+    console.log("GANTT PROPS:", props);
     const {processedTimeline, participantId} = props;
     const {utts, participants, startTime, endTime} = processedTimeline;
 
@@ -55,12 +56,15 @@ const drawGantt = (props) => {
                 color: u.participant == participantId ? colorYou : getColor(u.participant)};
     });
 
-    var gantt = Gantt().taskTypes(participantNames);
+    var gantt = Gantt('#gantt-' + props.meeting._id).taskTypes(participantNames);
     gantt(utts2);
 };
 
 const componentDidMount = (props) => {
-    drawGantt(props);
+    if (props.loaded & props.processedTimeline) {
+        console.log("TIMELINE loaded, props:", props);
+        drawGantt(props);
+    };
 };
 
 const componentDidUpdate = (props) => {
@@ -87,34 +91,25 @@ const chartInfo =
 // processedUtterances: [list of utterances...]
 // participants: [{id, name, ...}, ...]
 const TimelineView = (props) => {
-    console.log("timeline props:", props, props); 
-    const chartDiv = <div id='gantt'/>;
+    console.log("timeline props:", props); 
+    var chartDiv;
+    if (!props.loaded) {
+        chartDiv = (
+            <ScaleLoader color={'#8A6A94'}/>
+        );
+    } else {
+        chartDiv = <div id={'gantt-' + props.meeting._id}/>;
+    }
     return (
-        <React.Fragment>
-            <svg
-                id='Layer_1'
-                x='0px'
-                y='0px'
-                viewBox='0 0 1440 126'
-            >
-                <path
-                    style={{fill: 'rgba(171,69,171,1)'}}
-                    d='M685.6,38.8C418.7-11.1,170.2,9.9,0,30v96h1440V30C1252.7,52.2,1010,99.4,685.6,38.8z'
-                />
-            </svg>
-            <WaveDiv>
-                <ChartCard
-                    title='Timeline'
-                    chartDiv={chartDiv}
-
-                    // messy, but here we need to give the child component
-                    // a way to redraw the chart
-                    redraw={() => drawGantt(props)}
-                    chartInfo={chartInfo}
-                    maxWidth='50'
-                />
-            </WaveDiv>
-        </React.Fragment>
+          <ChartCard
+            title='Timeline'
+            chartDiv={chartDiv}
+            // messy, but here we need to give the child component
+            // a way to redraw the chart
+            redraw={() => {if (props.loaded && props.processedTimeline) { drawGantt(props)}}}
+            chartInfo={chartInfo}
+            maxWidth='80'
+            />
     );
 };
 

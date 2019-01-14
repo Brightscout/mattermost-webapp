@@ -52,12 +52,12 @@ const mapStateToProps = (state, ownProps) => {
     const riffState = {...lti, ...dashboard, ...riff};
     const meetingId = ownProps.meeting._id;
     const idx = getMeetingIndex(dashboard.meetings, meetingId);
-    console.log("meeting for this viz is:", dashboard.meetings[idx]);
-    console.log("timeline for this viz is:", idx, dashboard.timelineData[idx], dashboard.timelineData, dashboard.timelineStatus);
+    console.log("meeting for this viz is:", riffState.meetings[idx]);
+    console.log("timeline for this viz is:", idx, dashboard.timelineData);
     return {
         processedUtterances: dashboard.processedUtterances[idx],
-        processedinfluence: dashboard.influenceData[idx],
-        processedTimeline: dashboard.timelineData[idx],
+        influenceData: dashboard.influenceData[idx],
+        timelineData: dashboard.timelineData[idx],
         selectedMeetingDuration: formatMeetingDuration(dashboard.meetings[idx]),
         loaded: dashboard.statsStatus[idx] == 'loaded'
     };
@@ -188,11 +188,16 @@ class MeetingViz extends React.PureComponent {
                       </div>
                       
                     </div>
-                  </div>
 
                     <div className="section" style={{padding: "0px"}}>
-
+                      <TimelineChart processedTimeline={this.props.timelineData}
+                                     loaded={this.props.loaded}
+                                     meeting={this.props.meeting}
+                                     participantId={this.props.user.uid}>
+                      </TimelineChart>
                     </div>
+                  </div>
+
                   </div>
                 </div>
 

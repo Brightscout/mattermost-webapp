@@ -469,7 +469,7 @@ export const loadMeetingData = (uid, meetingId) => (dispatch) => {
             // });
 
             processedTimeline.then((processedTimeline) => {
-//                console.log('processed timeline:', processedTimeline);
+                console.log('processed timeline:', processedTimeline);
                 dispatch({
                     type: DashboardActionTypes.DASHBOARD_FETCH_MEETING_TIMELINE,
                     meetingId,
