@@ -40,7 +40,7 @@ letter-spacing: 0em;
 export const MenuLabelCentered = styled.div.attrs({
   className: 'menu-label has-text-centered'
 })`
-
+font-size: 1em;
 text-transform: none;
 letter-spacing: 0em;
 `;

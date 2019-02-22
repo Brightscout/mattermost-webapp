@@ -1,6 +1,11 @@
 // Copyright (c) 2018-present Riff Learning, Inc. All Rights Reserved.
 // See LICENSE.txt for license information.
 
+/* eslint
+    header/header: "off",
+    indent: ["error", 4, { "CallExpression": { "arguments": "first" } }]
+ */
+
 import React from 'react';
 import {connect} from 'react-redux';
 import sizeMe from 'react-sizeme';
@@ -49,10 +54,10 @@ const formatMeetingDuration = (meeting) => {
 const mapStateToProps = (state, ownProps) => {
     const {lti, dashboard, riff} = state.views;
     const riffState = {...lti, ...dashboard, ...riff};
-    const meetingId = ownProps.meeting._id;
+    const meetingId = ownProps.meeting._id; // eslint-disable-line no-underscore-dangle
     const idx = getMeetingIndex(dashboard.meetings, meetingId);
     logger.debug('meeting for this viz is:', riffState.meetings[idx]);
-    logger.debug('timeline for this viz is:', idx, dashboard.timelineData);
+    logger.debug('timeline for this viz is:', idx, dashboard.timelineData[idx]);
     return {
         processedUtterances: dashboard.processedUtterances[idx],
         influenceData: dashboard.influenceData[idx],
@@ -74,9 +79,11 @@ const Header = (props) => {
     return (
         <div
             className=''
-            style={{paddingBottom: '2rem',
-                    paddingTop: '1rem',
-                    paddingLeft: '1rem'}}
+            style={{
+                paddingBottom: '2rem',
+                paddingTop: '1rem',
+                paddingLeft: '1rem',
+            }}
         >
             <h3>{`Meeting at: ${meetingDate}`} </h3>
             <SpaceBetweeen>
@@ -96,7 +103,7 @@ Header.propTypes = {
     selectedMeetingDuration: PropTypes.string,
 };
 
-class MeetingViz extends React.PureComponent {
+class MeetingViz extends React.Component {
     static propTypes = {
         user: PropTypes.object.isRequired,
         allMeetings: PropTypes.array.isRequired,
@@ -124,10 +131,26 @@ class MeetingViz extends React.PureComponent {
         timelineData: {},
     };
 
+    shouldComponentUpdate(nextProps /*, nextState*/) {
+        let shouldUpdate = false;
+
+        if (nextProps.size.width > 0 && this.props.size.width !== nextProps.size.width) {
+            logger.debug('size changed');
+            shouldUpdate = true;
+        }
+
+        if (this.props.loaded !== nextProps.loaded) {
+            logger.debug('loaded changed');
+            shouldUpdate = true;
+        }
+
+        logger.debug('DEBUG Should update?: ', shouldUpdate);
+        return shouldUpdate;
+    }
+
     constructor(props) {
         super(props);
-        this.state = {
-        };
+        this.state = {};
 
         // only load if the data hasn't been loaded yet.
         // NEW: waypoint should take care of this for us.
@@ -141,8 +164,8 @@ class MeetingViz extends React.PureComponent {
         if (!this.props.loaded) {
             logger.debug('NOT loaded, waypoint loading this meeting...', event);
             this.props.loadMeetingData(this.props.user.id,
-                                       this.props.meeting._id);
-            this.props.maybeLoadNextMeeting(this.props.meeting._id, this.props.allMeetings);
+                                       this.props.meeting._id); // eslint-disable-line no-underscore-dangle
+            this.props.maybeLoadNextMeeting(this.props.meeting._id, this.props.allMeetings); // eslint-disable-line no-underscore-dangle
         }
     }
 

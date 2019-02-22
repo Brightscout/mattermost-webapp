@@ -5,9 +5,9 @@ import SimpleWebRtc from 'simplewebrtc';
 import Sibilant from 'sibilant-webaudio';
 import parse from 'url-parse';
 
-import * as WebRtcActions from '../../actions/webrtc_actions';
-import {updateRiffMeetingId} from '../../actions/views/riff';
-import {app, logger} from '../riff';
+import * as WebRtcActions from 'actions/webrtc_actions';
+import {updateRiffMeetingId} from 'actions/views/riff';
+import {app, logger, config as riffConfig} from 'utils/riff';
 
 export const createWebRtcLink = (teamName, channelName) => {
     const link = parse(window.location.href, true);
@@ -36,16 +36,13 @@ export function isScreenShareSourceAvailable() {
 
 export default function (localVideoNode, dispatch, getState) {
     //TODO: make dynamic
-    let signalmasterPath = process.env.CLIENT_ENV.SIGNALMASTER_PATH || '';
-    signalmasterPath += '/socket.io';
-    const signalmasterUrl = process.env.CLIENT_ENV.SIGNALMASTER_URL;
     const webRtcConfig = {
         localVideoEl: localVideoNode,
         remoteVideosEl: '',
         autoRequestMedia: true,
-        url: signalmasterUrl,
+        url: riffConfig.signalmasterUrl,
         socketio: {
-            path: signalmasterPath,
+            path: riffConfig.signalmasterPath + '/socket.io',
             forceNew: true,
         },
         media: {

@@ -18,7 +18,8 @@ import loadBackstageController from 'bundle-loader?lazy!components/backstage';
 import ChannelController from 'components/channel_layout/channel_controller';
 import PageController from 'components/page_layout/page_controller';
 import WebRtcController from 'components/webrtc_layout/webrtc_controller';
-import { customTheme } from './theme.js'
+
+import {customTheme} from './theme.js';
 
 const BackstageController = makeAsyncComponent(loadBackstageController);
 
@@ -107,9 +108,11 @@ export default class NeedsTeam extends React.Component {
     componentDidMount() {
         startPeriodicStatusUpdates();
         startPeriodicSync();
+
         // Set up tracking for whether the window is active
         window.isActive = true;
-        Utils.applyTheme(customTheme);
+        const theme = this.props.theme || customTheme;
+        Utils.applyTheme(theme);
 
         if (UserAgent.isIosSafari()) {
             // Use iNoBounce to prevent scrolling past the boundaries of the page
@@ -234,41 +237,43 @@ export default class NeedsTeam extends React.Component {
         const teamType = this.state.team ? this.state.team.type : '';
         return (
             <Switch>
-              <Route
-                path={'/:team/integrations'}
-                component={BackstageController}
-                />
-              <Route
-                path={'/:team/emoji'}
-                component={BackstageController}
-                />
-              <Route
-                exact
-                path={'/:team/:path(pages)/:identifier'}
-                render={(renderProps) => (
-                    <PageController
-                      pathName={renderProps.location.pathname}
-                      teamType={teamType}/>
-                )}
-                />
-              <Route
-                exact
-                path={'/:team/:identifier/video/:videoId'}
-                render={(renderProps) => (
-                    <WebRtcController
-                      pathName={renderProps.location.pathname}
-                      teamType={teamType}/>
-                )}
+                <Route
+                    path={'/:team/integrations'}
+                    component={BackstageController}
                 />
                 <Route
-                render={(renderProps) => (
-                <ChannelController
-                  pathName={renderProps.location.pathname}
-                  teamType={teamType}
-                  />
-            )}
+                    path={'/:team/emoji'}
+                    component={BackstageController}
                 />
-                </Switch>
+                <Route
+                    exact={true}
+                    path={'/:team/:path(pages)/:identifier'}
+                    render={(renderProps) => (
+                        <PageController
+                            pathName={renderProps.location.pathname}
+                            teamType={teamType}
+                        />
+                    )}
+                />
+                <Route
+                    exact={true}
+                    path={'/:team/:identifier/video/:videoId'}
+                    render={(renderProps) => (
+                        <WebRtcController
+                            pathName={renderProps.location.pathname}
+                            teamType={teamType}
+                        />
+                    )}
+                />
+                <Route
+                    render={(renderProps) => (
+                        <ChannelController
+                            pathName={renderProps.location.pathname}
+                            teamType={teamType}
+                        />
+                    )}
+                />
+            </Switch>
         );
     }
 }

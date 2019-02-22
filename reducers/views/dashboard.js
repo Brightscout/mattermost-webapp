@@ -1,7 +1,15 @@
-// Copyright (c) 2015-present Mattermost, Inc. All Rights Reserved.
+// Copyright (c) 2018-present Riff Learning, Inc. All Rights Reserved.
 // See LICENSE.txt for license information.
-import {DashboardActionTypes} from 'utils/constants.jsx';
+
+/* eslint
+    header/header: "off",
+    indent: ["error", 4, { "CallExpression": { "arguments": "first" } }]
+ */
+
 import _ from 'underscore';
+
+import {DashboardActionTypes} from 'utils/constants.jsx';
+import {logger} from 'utils/riff';
 
 const initialState = {
     numMeetings: 0,
@@ -10,7 +18,7 @@ const initialState = {
     meetings: [],
     loadingError: {
         status: false,
-        message: ''
+        message: '',
     },
 
     // 'loaded' at idx if utterances, influence, and timeline are all loaded
@@ -18,45 +26,47 @@ const initialState = {
 
     // initial number of meetings to load
     numLoadedMeetings: 2,
-    // array holding processed data for each meeting. 
+
+    // array holding processed data for each meeting.
     processedUtterances: [],
     influenceData: [],
-    timelineData: []
+    timelineData: [],
 };
 
 const getMeetingIndex = (meetings, meetingId) => {
-    let meetingIds = _.pluck(meetings, '_id');
+    const meetingIds = _.pluck(meetings, '_id');
     return _.indexOf(meetingIds, meetingId);
-}
+};
 
 const updateDataArray = (arr, idx, newData) => {
-    return [...arr.slice(0, idx), newData, ...arr.slice(idx+1)];
-}
+    return [...arr.slice(0, idx), newData, ...arr.slice(idx + 1)];
+};
 
 const updateArr = (state, arr, meetingId, newData) => {
-    let idx = getMeetingIndex(state, meetingId);
-    console.log("index of meeting", meetingId, "is:", idx, state.meetings);
+    const idx = getMeetingIndex(state, meetingId);
+    logger.debug(`index of meeting ${meetingId} is: ${idx}`, state.meetings);
     return updateDataArray(arr, idx, newData);
-}
+};
 
 const updateLoadingStatus = (state) => {
-    let unzipped = _.unzip([state.processedUtterances,
-                            state.influenceData,
-                            state.timelineData]);
+    const unzipped = _.unzip([
+        state.processedUtterances,
+        state.influenceData,
+        state.timelineData,
+    ]);
 
-    console.log("meetingLoaded UNZIPPED:", unzipped)
+    logger.debug('meetingLoaded UNZIPPED:', unzipped);
 
-    let meetingLoaded = _.map(unzipped, (triple) => {
-        let bools = _.map(triple, (t) => { return !(t === false) });
-        console.log("meetingLoaded mapped to bools:", bools)
-        return _.every(bools);
-    });
+    // a meeting is loaded if all processed datasets for the meeting exist
+    const meetingLoaded = unzipped.map((processedDatasets) => processedDatasets.every((dataset) => Boolean(dataset)));
+    logger.debug('meetingLoaded', meetingLoaded);
 
-    console.log("meetingLoaded", meetingLoaded)
-    let isLoadedArray = _.map(meetingLoaded, (m) => { return m ? 'loaded' : 'loading'});
-    return {...state,
-            statsStatus: isLoadedArray};
-}
+    const isLoadedArray = meetingLoaded.map((isLoaded) => {return isLoaded ? 'loaded' : 'loading';});
+    return {
+        ...state,
+        statsStatus: isLoadedArray,
+    };
+};
 
 const dashboard = (state = initialState, action) => {
     switch (action.type) {
@@ -65,11 +75,11 @@ const dashboard = (state = initialState, action) => {
     case DashboardActionTypes.DASHBOARD_LOAD_MORE_MEETINGS:
         return {
             ...state,
-            numLoadedMeetings: state.numLoadedMeetings + 1
+            numLoadedMeetings: state.numLoadedMeetings + 1,
         };
-    case DashboardActionTypes.DASHBOARD_FETCH_MEETINGS:
-        let timeDiff = ((((new Date()).getTime() - new Date(state.lastFetched).getTime())/1000) > 5);
-        console.log("time should fetch?", timeDiff);
+    case DashboardActionTypes.DASHBOARD_FETCH_MEETINGS: {
+        const timeDiff = ((((new Date()).getTime() - new Date(state.lastFetched).getTime()) / 1000) > 5);
+        logger.debug('time should fetch?', timeDiff);
         return {
             ...state,
             meetings: action.meetings ? action.meetings : state.meetings,
@@ -77,23 +87,26 @@ const dashboard = (state = initialState, action) => {
                 action.meetings.length :
                 state.meetings.length,
             lastFetched: new Date(),
-            shouldFetch: timeDiff
+            shouldFetch: timeDiff,
         };
-    case DashboardActionTypes.DASHBOARD_LOADING_ALL_MEETINGS:
+    }
+    case DashboardActionTypes.DASHBOARD_LOADING_ALL_MEETINGS: {
+        const numMeetings = state.meetings.length;
         return {
             ...state,
-            statsStatus: _.map(state.meetings, (m) => {return 'loading';}),
-            processedUtterances: _.map(state.meetings, (m) => {return false;}),
-            influenceData: _.map(state.meetings, (m) => {return false;}),
-            timelineData: _.map(state.meetings, (m) => {return false;})
+            statsStatus: new Array(numMeetings).fill('loading'),
+            processedUtterances: new Array(numMeetings).fill(false),
+            influenceData: new Array(numMeetings).fill(false),
+            timelineData: new Array(numMeetings).fill(false),
         };
+    }
     case DashboardActionTypes.DASHBOARD_LOADING_ERROR:
         return {
             ...state,
             error: {
                 ...action.message,
-                ...action.status
-            }
+                ...action.status,
+            },
         };
 
     case DashboardActionTypes.DASHBOARD_MEETING_LOAD_STATUS:
@@ -102,7 +115,7 @@ const dashboard = (state = initialState, action) => {
             statsStatus: updateArr(state.meetings,
                                    state.statsStatus,
                                    action.meetingId,
-                                   action.status)
+                                   action.status),
         };
     case DashboardActionTypes.DASHBOARD_FETCH_MEETING_UTTERANCES:
         return updateLoadingStatus({
@@ -110,7 +123,7 @@ const dashboard = (state = initialState, action) => {
             processedUtterances: updateArr(state.meetings,
                                            state.processedUtterances,
                                            action.meetingId,
-                                           action.processedUtterances)
+                                           action.processedUtterances),
         });
     case DashboardActionTypes.DASHBOARD_FETCH_MEETING_INFLUENCE:
         return updateLoadingStatus({
@@ -118,7 +131,7 @@ const dashboard = (state = initialState, action) => {
             influenceData: updateArr(state.meetings,
                                      state.influenceData,
                                      action.meetingId,
-                                     action.influenceData)
+                                     action.influenceData),
         });
     case DashboardActionTypes.DASHBOARD_FETCH_MEETING_TIMELINE:
         return updateLoadingStatus({
@@ -126,7 +139,7 @@ const dashboard = (state = initialState, action) => {
             timelineData: updateArr(state.meetings,
                                     state.timelineData,
                                     action.meetingId,
-                                    action.timelineData)
+                                    action.timelineData),
         });
     default:
         return state;

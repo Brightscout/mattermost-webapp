@@ -50,8 +50,14 @@ $blue: rgb(19,129,161);
 $primary: $purple;
 $link: $purple;
 
-a:hover {
-    color: $purpleHover;
+html {
+  a {
+    color: $purple;
+    &:hover {
+        color: #363636;
+        text-decoration: none;
+    }
+  }
 }
 
 .sigma-scene {

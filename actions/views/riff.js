@@ -1,8 +1,10 @@
-// Copyright (c) 2015-present Mattermost, Inc. All Rights Reserved.
+// Copyright (c) 2018-present Riff Learning, Inc. All Rights Reserved.
 // See LICENSE.txt for license information.
-import {RiffServerActionTypes} from '../../utils/constants';
 
-import {app, socket} from '../../utils/riff';
+/* eslint header/header: "off" */
+
+import {RiffServerActionTypes} from 'utils/constants';
+import {app, socket, logger} from 'utils/riff';
 
 export const riffAuthSuccess = (token) => {
     return {
@@ -19,7 +21,7 @@ export const riffAuthFail = (err) => {
 };
 
 export const updateTurnData = (transitions, turns) => {
-    console.log('updating turn data:', transitions, turns);
+    logger.debug('updating turn data:', transitions, turns);
     return {
         type: RiffServerActionTypes.RIFF_TURN_UPDATE,
         transitions,
@@ -28,7 +30,7 @@ export const updateTurnData = (transitions, turns) => {
 };
 
 export const updateMeetingParticipants = (participants) => {
-    console.log('updating riff meeting participants', participants);
+    logger.debug('updating riff meeting participants', participants);
     return {
         type: RiffServerActionTypes.RIFF_PARTICIPANTS_CHANGED,
         participants,
@@ -48,18 +50,13 @@ export const participantLeaveRoom = (meetingId, participantId) => {
         patch(meetingId, {
             remove_participants: [participantId],
         }).
-        then((res) => {
-            console.log(
-                'removed participant:',
-                participantId,
-                'from meeting ',
-                meetingId
-            );
+        then(() => {
+            logger.debug(`removed participant: ${participantId} from meeting ${meetingId}`);
             return true;
         }).
         catch((err) => {
+            logger.error('shit, caught an error:', err);
             return false;
-            console.log('shit, caught an error:', err);
         });
 };
 
@@ -70,15 +67,15 @@ export const attemptRiffAuthenticate = () => (dispatch) => {
         password: 'default-user-password',
     }).
         then((result) => {
-            console.log('auth result!: ', result);
+            logger.debug('riff data server auth result!: ', result);
             dispatch(riffAuthSuccess(result.accessToken));
 
             //return this.recordMeetingJoin();
         }).
         catch((err) => {
-            console.log('auth ERROR:', err);
+            logger.warn('riff data server auth ERROR:', err);
             dispatch(riffAuthFail(err));
-            console.log('trying to authenticate again...');
+            logger.info('trying to authenticate again...');
             dispatch(attemptRiffAuthenticate());
         });
 };
@@ -92,7 +89,6 @@ export const riffAddUserToMeeting = (
     currentUsers,
     token
 ) => {
-    
     const parts = currentUsers.map((user) => {
         return {participant: user.id};
     });

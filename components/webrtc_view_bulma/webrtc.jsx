@@ -56,63 +56,69 @@ class WebRtc extends Component {
     }
 
     reattachVideo(video) {
-      if (video == null) {
-        return;
-      }
-      try {
-        if (this.props.inRoom &&
-            this.webrtc &&
-            this.webrtc.webrtc.localStreams.length &&
-            video.srcObject == null) {
-          this.webrtc.reattachLocalVideo(video);
+        if (video == null) {
+            return;
         }
-      } catch (err) {
-        // it is possible webrtc state will change while re-rendering,
-        // which can break things
-        // we catch the exception here so we can recover
-        logger.debug(err);
-      }
-      
-      // creating ref for local video so we can pass down to children
-      this.localVideoRef = video;
+        try {
+            if (
+                this.props.inRoom &&
+                this.webrtc &&
+                this.webrtc.webrtc.localStreams.length &&
+                video.srcObject == null
+            ) {
+                this.webrtc.reattachLocalVideo(video);
+            }
+        } catch (err) {
+            // it is possible webrtc state will change while re-rendering,
+            // which can break things
+            // we catch the exception here so we can recover
+            logger.debug(err);
+        }
+
+        // creating ref for local video so we can pass down to children
+        this.localVideoRef = video;
     }
 
     render () {
         return (
-            <div id='app-content'
-                 className=''>
-              <div className="section">
-                <div className="columns is-fullheight">
-                  <div className="column is-3 is-sidebar-menu is-hidden-mobile">
-                  <WebRtcSidebar {...this.props}
-                                 webrtc={this.webrtc}
-                                 localVideoRef={this.localVideoRef}
-                                 reattachVideo={this.reattachVideo}/>
-                  </div>
-                  <div className="column">
-                  <RenderVideos inRoom={this.props.inRoom}
+            <div id='app-content' className=''>
+                <div className="section">
+                    <div className="columns is-fullheight">
+                        <div className="is-sidebar-menu">
+                            <WebRtcSidebar {...this.props}
+                                webrtc={this.webrtc}
+                                localVideoRef={this.localVideoRef}
+                                reattachVideo={this.reattachVideo}
+                            />
+                        </div>
+                        <div className="column">
+                            <RenderVideos
+                                inRoom={this.props.inRoom}
                                 roomName={this.props.roomName}
                                 handleKeyPress={this.props.handleKeyPress}
                                 webRtcPeers={this.props.webRtcPeers}
                                 handleRoomNameChange={null}
                                 handleReadyClick={(event) => this.props.handleReadyClick(event, this.props, this.webrtc)}
-                    joinButtonDisabled={false}
-                    clearJoinRoomError={this.props.clearJoinRoomError}
-                    joinRoomStatus={this.props.joinRoomStatus}
-                    joinRoomMessage={this.props.joinRoomMessage}
-                    chat={this.props}
-                    riff={this.props.riff}
-                    webrtc={this.webrtc}
-                    displayRoomName={false}
-                    displayName={this.props.user.nickname == "" ?
-                    "@" + this.props.user.username : this.props.user.nickname}
-                    roDisplayName={true}
-                    webRtcRemoteSharedScreen={this.props.webRtcRemoteSharedScreen}>
-                  </RenderVideos>
-                  {this.props.inRoom && <TextChat/>}
-                  </div>
+                                joinButtonDisabled={false}
+                                clearJoinRoomError={this.props.clearJoinRoomError}
+                                joinRoomStatus={this.props.joinRoomStatus}
+                                joinRoomMessage={this.props.joinRoomMessage}
+                                chat={this.props}
+                                riff={this.props.riff}
+                                webrtc={this.webrtc}
+                                displayRoomName={false}
+                                displayName={this.props.user.nickname == "" ? (
+                                    "@" + this.props.user.username
+                                ) : (
+                                    this.props.user.nickname
+                                )}
+                                roDisplayName={true}
+                                webRtcRemoteSharedScreen={this.props.webRtcRemoteSharedScreen}
+                            />
+                            {this.props.inRoom && <TextChat/>}
+                        </div>
+                    </div>
                 </div>
-              </div>
             </div>
         );
     }

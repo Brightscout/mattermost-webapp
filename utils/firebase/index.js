@@ -1,5 +1,8 @@
-// Copyright (c) 2015-present Mattermost, Inc. All Rights Reserved.
+// Copyright (c) 2018-present Riff Learning, Inc. All Rights Reserved.
 // See LICENSE.txt for license information.
+
+/* eslint header/header: "off" */
+
 import firebase from 'firebase/app';
 import 'firebase/auth';
 import 'firebase/firestore';
@@ -22,8 +25,17 @@ const app = firebase.initializeApp(config);
 //   [2018-10-09T19:48:08.741Z]  @firebase/firestore: Firestore (5.5.0):
 //   The behavior for Date objects stored in Firestore is going to change
 //   AND YOUR APP MAY BREAK.
+//
+// The new firebase warning:
+//   [2019-02-11T19:51:57.937Z]  @firebase/firestore: Firestore (5.8.1):
+//   The timestampsInSnapshots setting now defaults to true and you no
+//   longer need to explicitly set it. In a future release, the setting
+//   will be removed entirely and so it is recommended that you remove it
+//   from your firestore.settings() call now.
+// I'm leaving the empty settings object to make it easier if we need to
+// add settings back again.
 const firestore = app.firestore();
-const settings = {timestampsInSnapshots: true};
+const settings = {};
 firestore.settings(settings);
 
 export default app;
