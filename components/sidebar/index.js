@@ -26,14 +26,12 @@ import {getCurrentTeam} from 'mattermost-redux/selectors/entities/teams';
 import {GroupUnreadChannels} from 'utils/constants.jsx';
 import {close} from 'actions/views/lhs';
 import {getIsLhsOpen} from 'selectors/lhs';
-import {getCurrentPage} from 'actions/global_actions';
 
 import Sidebar from './sidebar.jsx';
 
-function mapStateToProps(state, ownProps) {
+function mapStateToProps(state) {
     const config = getConfig(state);
     const currentChannel = getCurrentChannel(state);
-    const currentPage = getCurrentPage(ownProps.match);
     const currentTeammate = currentChannel && currentChannel.teammate_id && getCurrentChannel(state, currentChannel.teammate_id);
     let publicChannelIds;
     let privateChannelIds;
@@ -80,7 +78,6 @@ function mapStateToProps(state, ownProps) {
         unreadChannelIds: getSortedUnreadChannelIds(state, keepChannelIdAsUnread),
         currentChannel,
         currentTeammate,
-        currentPage,
         currentTeam: getCurrentTeam(state),
         currentUser: getCurrentUser(state),
         unreads: getUnreads(state),

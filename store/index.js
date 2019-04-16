@@ -174,7 +174,6 @@ export default function configureStore(initialState) {
                 log: false,
             },
             whitelist,
-            blacklist: ['textchat', 'webrtc'],
             debounce: 30,
             transforms: [
                 setTransformer,

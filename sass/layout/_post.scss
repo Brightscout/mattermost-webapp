@@ -526,7 +526,7 @@
         }
 
         .icon--attachment {
-            @include opacity(.7);
+            @include opacity(.4);
             @include single-transition(all, .15s);
             cursor: pointer;
             overflow: hidden;
@@ -598,7 +598,7 @@
 
 
         .icon--emoji-picker {
-            @include opacity(.7);
+            @include opacity(.5);
             @include single-transition(all, .15s);
             cursor: pointer;
 
@@ -689,7 +689,7 @@
     width: 100%;
 
     .post-list__content {
-
+        display: table-cell;
         vertical-align: bottom;
 
         .dropdown-menu {

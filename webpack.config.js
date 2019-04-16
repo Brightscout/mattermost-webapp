@@ -171,10 +171,6 @@ var config = {
                 ],
             },
             {
-                test: /\.coffee$/,
-                use: ['coffee-loader']
-            },
-            {
                 type: 'javascript/auto',
                 test: /\.json$/,
                 include: [
@@ -299,15 +295,11 @@ if (!DEV) {
 }
 
 const env = {};
-
 if (DEV) {
     env.PUBLIC_PATH = JSON.stringify(publicPath);
 } else {
     env.NODE_ENV = JSON.stringify('production');
 }
-
-env.CLIENT_ENV = JSON.stringify(process.env);
-
 config.plugins.push(new webpack.DefinePlugin({
     'process.env': env,
 }));
@@ -324,7 +316,6 @@ if (TEST) {
             filename: 'root.html',
             inject: 'head',
             template: 'root.html',
-            favicon: './images/favicon/favicon-16x16.png',
         })
     );
     config.plugins.push(
@@ -409,4 +400,3 @@ config.plugins.push(
 );
 
 module.exports = config;
-

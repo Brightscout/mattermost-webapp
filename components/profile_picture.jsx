@@ -24,6 +24,7 @@ export default class ProfilePicture extends React.PureComponent {
         width: PropTypes.string,
         height: PropTypes.string,
         user: PropTypes.object,
+        isBusy: PropTypes.bool,
         isRHS: PropTypes.bool,
         hasMention: PropTypes.bool,
     };
@@ -46,6 +47,7 @@ export default class ProfilePicture extends React.PureComponent {
                                 user={this.props.user}
                                 src={this.props.src}
                                 status={this.props.status}
+                                isBusy={this.props.isBusy}
                                 hide={this.hideProfilePopover}
                                 isRHS={this.props.isRHS}
                                 hasMention={this.props.hasMention}

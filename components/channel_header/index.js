@@ -6,13 +6,11 @@ import {bindActionCreators} from 'redux';
 import {favoriteChannel, leaveChannel, unfavoriteChannel, updateChannelNotifyProps} from 'mattermost-redux/actions/channels';
 import {getCustomEmojisInText} from 'mattermost-redux/actions/emojis';
 import {General} from 'mattermost-redux/constants';
-import {getCurrentChannelStats, getChannel, getMyChannelMember, isCurrentChannelReadOnly} from 'mattermost-redux/selectors/entities/channels';
-import {getMyTeamMember, getCurrentTeam} from 'mattermost-redux/selectors/entities/teams';
-import {getCurrentUser, getUser} from 'mattermost-redux/selectors/entities/users';
+import {getChannel, getMyChannelMember, isCurrentChannelReadOnly} from 'mattermost-redux/selectors/entities/channels';
+import {getMyTeamMember} from 'mattermost-redux/selectors/entities/teams';
+import {getCurrentUser, getStatusForUserId, getUser} from 'mattermost-redux/selectors/entities/users';
 import {getUserIdFromChannelName, isDefault, isFavoriteChannel} from 'mattermost-redux/utils/channel_utils';
-import {getLicense} from 'mattermost-redux/selectors/entities/general';
-import {sendWebRtcMessage} from 'actions/webrtc_channel_actions';
-import {getWebRtcLink} from 'selectors/views/webrtc';
+import {getLicense, getConfig} from 'mattermost-redux/selectors/entities/general';
 
 import {withRouter} from 'react-router-dom';
 
@@ -37,12 +35,15 @@ function mapStateToProps(state, ownProps) {
     const user = getCurrentUser(state);
 
     let dmUser;
+    let dmUserStatus;
     if (channel && channel.type === General.DM_CHANNEL) {
         const dmUserId = getUserIdFromChannelName(user.id, channel.name);
         dmUser = getUser(state, dmUserId);
+        dmUserStatus = {status: getStatusForUserId(state, dmUserId)};
     }
 
     const license = getLicense(state);
+    const config = getConfig(state);
 
     let lastViewedChannelName = getLastViewedChannelName(state);
     if (!lastViewedChannelName || (channel && lastViewedChannelName === channel.name)) {
@@ -56,20 +57,19 @@ function mapStateToProps(state, ownProps) {
 
     return {
         channel,
-        channelStats: getCurrentChannelStats(state, ownProps.channelId),
         channelMember: getMyChannelMember(state, ownProps.channelId),
         teamMember: getMyTeamMember(state, channel.team_id),
         isFavorite: isFavoriteChannel(prefs, ownProps.channelId),
         isDefault: isDefault(channel),
-        currentTeam: getCurrentTeam(state),
         currentUser: user,
         dmUser,
+        dmUserStatus,
         rhsState: getRhsState(state),
         isLicensed: license.IsLicensed === 'true',
+        enableWebrtc: config.EnableWebrtc === 'true',
         isReadOnly: isCurrentChannelReadOnly(state),
         lastViewedChannelName,
         penultimateViewedChannelName,
-        webRtcLink: getWebRtcLink(state, ownProps)
     };
 }
 
@@ -87,9 +87,8 @@ function mapDispatchToProps(dispatch) {
             openModal,
             getCustomEmojisInText,
             updateChannelNotifyProps,
-            sendWebRtcMessage
         }, dispatch),
     };
 }
-export default withRouter(connect(mapStateToProps,
-                                  mapDispatchToProps)(ChannelHeader));
+
+export default withRouter(connect(mapStateToProps, mapDispatchToProps)(ChannelHeader));

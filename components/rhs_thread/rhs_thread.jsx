@@ -10,6 +10,7 @@ import {Posts} from 'mattermost-redux/constants';
 
 import PreferenceStore from 'stores/preference_store.jsx';
 import UserStore from 'stores/user_store.jsx';
+import WebrtcStore from 'stores/webrtc_store.jsx';
 import Constants from 'utils/constants.jsx';
 import DelayedAction from 'utils/delayed_action.jsx';
 import * as Utils from 'utils/utils.jsx';
@@ -54,6 +55,7 @@ export default class RhsThread extends React.Component {
         channel: PropTypes.object.isRequired,
         selected: PropTypes.object.isRequired,
         previousRhsState: PropTypes.string,
+        isWebrtc: PropTypes.bool,
         currentUser: PropTypes.object.isRequired,
         previewCollapsed: PropTypes.string.isRequired,
         previewEnabled: PropTypes.bool.isRequired,
@@ -77,6 +79,7 @@ export default class RhsThread extends React.Component {
             flaggedPosts: PreferenceStore.getCategory(Constants.Preferences.CATEGORY_FLAGGED_POST),
             statuses: Object.assign({}, UserStore.getStatuses()),
             previewsCollapsed: PreferenceStore.get(Preferences.CATEGORY_DISPLAY_SETTINGS, Preferences.COLLAPSE_DISPLAY, 'false'),
+            isBusy: WebrtcStore.isBusy(),
             isScrolling: false,
             topRhsPostCreateAt: 0,
             openTime,
@@ -87,6 +90,7 @@ export default class RhsThread extends React.Component {
         PreferenceStore.addChangeListener(this.onPreferenceChange);
         UserStore.addChangeListener(this.onUserChange);
         UserStore.addStatusesChangeListener(this.onStatusChange);
+        WebrtcStore.addBusyListener(this.onBusy);
 
         this.scrollToBottom();
         window.addEventListener('resize', this.handleResize);
@@ -96,6 +100,7 @@ export default class RhsThread extends React.Component {
         PreferenceStore.removeChangeListener(this.onPreferenceChange);
         UserStore.removeChangeListener(this.onUserChange);
         UserStore.removeStatusesChangeListener(this.onStatusChange);
+        WebrtcStore.removeBusyListener(this.onBusy);
 
         window.removeEventListener('resize', this.handleResize);
     }
@@ -160,6 +165,10 @@ export default class RhsThread extends React.Component {
             return true;
         }
 
+        if (nextState.isBusy !== this.state.isBusy) {
+            return true;
+        }
+
         if (nextState.isScrolling !== this.state.isScrolling) {
             return true;
         }
@@ -191,6 +200,10 @@ export default class RhsThread extends React.Component {
 
     onStatusChange = () => {
         this.setState({statuses: Object.assign({}, UserStore.getStatuses())});
+    }
+
+    onBusy = (isBusy) => {
+        this.setState({isBusy});
     }
 
     filterPosts = (posts, selected, openTime) => {
@@ -354,6 +367,7 @@ export default class RhsThread extends React.Component {
                     compactDisplay={this.state.compactDisplay}
                     isFlagged={isFlagged}
                     status={status}
+                    isBusy={this.state.isBusy}
                     removePost={this.props.actions.removePost}
                     previewCollapsed={this.props.previewCollapsed}
                     previewEnabled={this.props.previewEnabled}
@@ -418,6 +432,7 @@ export default class RhsThread extends React.Component {
                 />
                 <RhsHeaderPost
                     previousRhsState={this.props.previousRhsState}
+                    isWebrtc={this.props.isWebrtc}
                 />
                 <Scrollbars
                     autoHide={true}
@@ -442,6 +457,7 @@ export default class RhsThread extends React.Component {
                             status={rootStatus}
                             previewCollapsed={this.props.previewCollapsed}
                             previewEnabled={this.props.previewEnabled}
+                            isBusy={this.state.isBusy}
                         />
                         {isFakeDeletedPost && <DateSeparator date={rootPostDay}/>}
                         <div

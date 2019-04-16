@@ -14,11 +14,13 @@ import EditChannelHeaderModal from 'components/edit_channel_header_modal';
 import EditChannelPurposeModal from 'components/edit_channel_purpose_modal';
 import * as ChannelActions from 'actions/channel_actions.jsx';
 import * as GlobalActions from 'actions/global_actions.jsx';
+import * as WebrtcActions from 'actions/webrtc_actions.jsx';
 import ChannelStore from 'stores/channel_store.jsx';
 import ModalStore from 'stores/modal_store.jsx';
 import PreferenceStore from 'stores/preference_store.jsx';
 import TeamStore from 'stores/team_store.jsx';
 import UserStore from 'stores/user_store.jsx';
+import WebrtcStore from 'stores/webrtc_store.jsx';
 import * as ChannelUtils from 'utils/channel_utils.jsx';
 import {
     ActionTypes,
@@ -26,6 +28,7 @@ import {
     ModalIdentifiers,
     NotificationLevels,
     RHSStates,
+    UserStatuses,
 } from 'utils/constants.jsx';
 import * as Utils from 'utils/utils.jsx';
 
@@ -55,6 +58,7 @@ export default class Navbar extends React.Component {
     static propTypes = {
         teamDisplayName: PropTypes.string,
         isPinnedPosts: PropTypes.bool,
+        enableWebrtc: PropTypes.bool.isRequired,
         isReadOnly: PropTypes.bool,
         actions: PropTypes.shape({
             updateRhsState: PropTypes.func,
@@ -95,6 +99,8 @@ export default class Navbar extends React.Component {
         ModalStore.addModalListener(ActionTypes.TOGGLE_QUICK_SWITCH_MODAL, this.toggleQuickSwitchModal);
         ModalStore.addModalListener(ActionTypes.TOGGLE_CHANNEL_PURPOSE_UPDATE_MODAL, this.showChannelPurposeModal);
         ModalStore.addModalListener(ActionTypes.TOGGLE_CHANNEL_NAME_UPDATE_MODAL, this.showRenameChannelModal);
+        WebrtcStore.addChangedListener(this.onChange);
+        WebrtcStore.addBusyListener(this.onBusy);
         document.addEventListener('keydown', this.handleQuickSwitchKeyPress);
         $('.inner-wrap').on('click', this.hideSidebars);
     }
@@ -108,6 +114,8 @@ export default class Navbar extends React.Component {
         ModalStore.removeModalListener(ActionTypes.TOGGLE_QUICK_SWITCH_MODAL, this.toggleQuickSwitchModal);
         ModalStore.removeModalListener(ActionTypes.TOGGLE_CHANNEL_PURPOSE_UPDATE_MODAL, this.showChannelPurposeModal);
         ModalStore.removeModalListener(ActionTypes.TOGGLE_CHANNEL_NAME_UPDATE_MODAL, this.showRenameChannelModal);
+        WebrtcStore.removeChangedListener(this.onChange);
+        WebrtcStore.removeBusyListener(this.onBusy);
         document.removeEventListener('keydown', this.handleQuickSwitchKeyPress);
         $('.inner-wrap').off('click', this.hideSidebars);
     }
@@ -128,6 +136,7 @@ export default class Navbar extends React.Component {
             currentUser: UserStore.getCurrentUser(),
             isFavorite: channel && ChannelUtils.isFavoriteChannel(channel),
             contactId,
+            isBusy: WebrtcStore.isBusy(),
         };
     }
 
@@ -263,6 +272,76 @@ export default class Navbar extends React.Component {
         }
     };
 
+    onBusy = (isBusy) => {
+        this.setState({isBusy});
+    }
+
+    isContactNotAvailable() {
+        const contactStatus = UserStore.getStatus(this.state.contactId);
+
+        return contactStatus === UserStatuses.OFFLINE || contactStatus === UserStatuses.DND || this.state.isBusy;
+    }
+
+    isWebrtcEnabled() {
+        return this.props.enableWebrtc && Utils.isUserMediaAvailable();
+    }
+
+    initWebrtc = () => {
+        if (!this.isContactNotAvailable()) {
+            GlobalActions.emitCloseRightHandSide();
+            WebrtcActions.initWebrtc(this.state.contactId, true);
+        }
+    }
+
+    generateWebrtcDropdown() {
+        if (!this.isWebrtcEnabled()) {
+            return null;
+        }
+
+        let linkClass = '';
+        if (this.isContactNotAvailable()) {
+            linkClass = 'disable-links';
+        }
+
+        return (
+            <li
+                role='presentation'
+                className='webrtc__option visible-xs-block'
+            >
+                <button
+                    role='menuitem'
+                    onClick={this.initWebrtc}
+                    className={'style--none ' + linkClass}
+                >
+                    <FormattedMessage
+                        id='navbar_dropdown.webrtc.call'
+                        defaultMessage='Start Video Call'
+                    />
+                </button>
+            </li>
+        );
+    }
+
+    generateWebrtcIcon() {
+        const channel = this.state.channel || {};
+        if (!this.isWebrtcEnabled() || channel.type !== Constants.DM_CHANNEL) {
+            return null;
+        }
+
+        let circleClass = '';
+        if (this.isContactNotAvailable()) {
+            circleClass = 'offline';
+        }
+
+        return (
+            <div className={'pull-right description navbar-right__icon webrtc__button hidden-xs ' + circleClass}>
+                <a onClick={this.initWebrtc}>
+                    {'WebRTC'}
+                </a>
+            </div>
+        );
+    }
+
     renderEditChannelHeaderOption = (channel) => {
         if (!channel || !channel.id) {
             return null;
@@ -300,6 +379,7 @@ export default class Navbar extends React.Component {
     createDropdown = (teamId, channel, channelTitle, isDirect, isGroup) => {
         if (channel) {
             let viewInfoOption;
+            let webrtcOption;
             let viewPinnedPostsOption;
             let addMembersOption;
             let manageMembersOption;
@@ -313,6 +393,8 @@ export default class Navbar extends React.Component {
 
             if (isDirect) {
                 setChannelHeaderOption = this.renderEditChannelHeaderOption(channel);
+
+                webrtcOption = this.generateWebrtcDropdown();
             } else if (isGroup) {
                 setChannelHeaderOption = this.renderEditChannelHeaderOption(channel);
 
@@ -619,6 +701,7 @@ export default class Navbar extends React.Component {
             return (
                 <div className='navbar-brand'>
                     <div className='dropdown'>
+                        {this.generateWebrtcIcon()}
                         <a
                             href='#'
                             className='dropdown-toggle theme'
@@ -637,6 +720,7 @@ export default class Navbar extends React.Component {
                             role='menu'
                         >
                             {viewInfoOption}
+                            {webrtcOption}
                             {viewPinnedPostsOption}
                             {notificationPreferenceOption}
                             {addMembersOption}

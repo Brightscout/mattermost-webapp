@@ -22,6 +22,8 @@ import SidebarRightMenu from 'components/sidebar_right_menu';
 import TeamSettingsModal from 'components/team_settings_modal.jsx';
 import ImportThemeModal from 'components/user_settings/import_theme_modal.jsx';
 import UserSettingsModal from 'components/user_settings/modal';
+import WebrtcNotification from 'components/webrtc/notification';
+import WebrtcSidebar from 'components/webrtc/sidebar';
 import ModalController from 'components/modal_controller';
 import TeamSidebar from 'components/team_sidebar';
 import Sidebar from 'components/sidebar';
@@ -43,10 +45,12 @@ export default class ChannelController extends React.Component {
             <div className='channel-view'>
                 <AnnouncementBar/>
                 <SystemNotice/>
+                <WebrtcNotification/>
 
                 <div className='container-fluid'>
                     <SidebarRight/>
                     <SidebarRightMenu teamType={this.props.teamType}/>
+                    <WebrtcSidebar/>
                     <Route component={TeamSidebar}/>
                     <Route component={Sidebar}/>
                     <Route component={CenterChannel}/>

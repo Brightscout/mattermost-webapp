@@ -7,6 +7,7 @@ import {OverlayTrigger, Tooltip} from 'react-bootstrap';
 import {FormattedMessage} from 'react-intl';
 
 import Constants from 'utils/constants.jsx';
+import {localizeMessage} from 'utils/utils.jsx';
 
 export default class SearchResultsHeader extends React.Component {
     static propTypes = {
@@ -94,21 +95,23 @@ export default class SearchResultsHeader extends React.Component {
                         <OverlayTrigger
                             trigger={['hover', 'focus']}
                             delayShow={Constants.OVERLAY_TIME_DELAY}
-                            placement='bottom'
+                            placement='top'
                             overlay={expandSidebarTooltip}
                         >
                             <i
                                 className='fa fa-expand'
+                                title={localizeMessage('rhs_header.expandSidebarTooltip.icon', 'Expand Sidebar Icon')}
                             />
                         </OverlayTrigger>
                         <OverlayTrigger
                             trigger={['hover', 'focus']}
                             delayShow={Constants.OVERLAY_TIME_DELAY}
-                            placement='bottom'
+                            placement='top'
                             overlay={shrinkSidebarTooltip}
                         >
                             <i
                                 className='fa fa-compress'
+                                title={localizeMessage('rhs_header.expandTooltip.icon', 'Shrink Sidebar Icon')}
                             />
                         </OverlayTrigger>
                     </button>
@@ -116,16 +119,18 @@ export default class SearchResultsHeader extends React.Component {
                         type='button'
                         className='sidebar--right__close'
                         aria-label='Close'
+                        title='Close'
                         onClick={this.props.actions.closeRightHandSide}
                     >
                         <OverlayTrigger
                             trigger={['hover', 'focus']}
                             delayShow={Constants.OVERLAY_TIME_DELAY}
-                            placement='bottom'
+                            placement='top'
                             overlay={closeSidebarTooltip}
                         >
                             <i
                                 className='fa fa-sign-out'
+                                title={localizeMessage('rhs_header.closeTooltip.icon', 'Close Sidebar Icon')}
                             />
                         </OverlayTrigger>
                     </button>

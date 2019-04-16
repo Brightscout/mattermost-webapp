@@ -12,6 +12,7 @@ describe('components/LeaveTeamModal', () => {
         currentTeamId: 'team_id',
         onHide: jest.fn(),
         show: false,
+        isBusy: false,
         actions: {
             removeUserFromTeam: jest.fn(),
             toggleSideBarRightMenu: jest.fn(),
@@ -61,5 +62,18 @@ describe('components/LeaveTeamModal', () => {
         instance.componentWillUnmount();
 
         expect(document.removeEventListener).toHaveBeenCalledTimes(1);
+    });
+
+    it('should not call removeUserFromTeam and toggleSideBarRightMenu when ok is clicked', () => {
+        const wrapper = shallowWithIntl(<LeaveTeamModal {...{...requiredProps, isBusy: true}}/>).
+            dive({disableLifecycleMethods: true});
+        const ok = wrapper.find('.btn-danger').first();
+
+        const e = {preventDefault: jest.fn()};
+        ok.simulate('click', e);
+        expect(requiredProps.actions.removeUserFromTeam).toHaveBeenCalledTimes(0);
+        expect(requiredProps.actions.toggleSideBarRightMenu).toHaveBeenCalledTimes(0);
+        expect(requiredProps.onHide).toHaveBeenCalledTimes(1);
+        expect(e.preventDefault).toHaveBeenCalledTimes(1);
     });
 });

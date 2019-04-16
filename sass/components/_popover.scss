@@ -108,6 +108,17 @@
     max-width: 200px;
     overflow: hidden;
     text-overflow: ellipsis;
+
+    &[disabled] {
+        color: $video-circle-offline;
+
+        &:focus,
+        &:hover {
+            color: $video-circle-offline;
+            text-decoration: none;
+        }
+    }
+
 }
 
 .search-help-popover {

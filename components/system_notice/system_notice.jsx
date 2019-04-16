@@ -7,7 +7,7 @@ import {FormattedMessage} from 'react-intl';
 
 import {Preferences} from 'utils/constants.jsx';
 import {localizeMessage} from 'utils/utils.jsx';
-import RiffLogo from 'components/common/riff_logo';
+import MattermostLogo from 'components/svg/mattermost_logo';
 
 export default class SystemNotice extends React.PureComponent {
     static propTypes = {
@@ -119,7 +119,7 @@ export default class SystemNotice extends React.PureComponent {
             >
                 <div className='system-notice__header'>
                     <div className='system-notice__logo'>
-                        <RiffLogo/>
+                        <MattermostLogo/>
                     </div>
                     <div className='system-notice__title'>
                         {notice.title}

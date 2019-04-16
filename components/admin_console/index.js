@@ -11,16 +11,8 @@ import {getLicense} from 'mattermost-redux/selectors/entities/general';
 import {getRoles} from 'mattermost-redux/selectors/entities/roles';
 import {isCurrentUserSystemAdmin} from 'mattermost-redux/selectors/entities/users';
 
-import {
-    setNavigationBlocked,
-    deferNavigation,
-    cancelNavigation,
-    confirmNavigation,
-} from 'actions/admin_actions.jsx';
-import {
-    getNavigationBlocked,
-    showNavigationPrompt,
-} from 'selectors/views/admin';
+import {setNavigationBlocked, deferNavigation, cancelNavigation, confirmNavigation} from 'actions/admin_actions.jsx';
+import {getNavigationBlocked, showNavigationPrompt} from 'selectors/views/admin';
 
 import AdminConsole from './admin_console.jsx';
 
@@ -38,25 +30,17 @@ function mapStateToProps(state) {
 
 function mapDispatchToProps(dispatch) {
     return {
-        actions: bindActionCreators(
-            {
-                getConfig,
-                getEnvironmentConfig,
-                setNavigationBlocked,
-                deferNavigation,
-                cancelNavigation,
-                confirmNavigation,
-                loadRolesIfNeeded,
-                editRole,
-            },
-            dispatch
-        ),
+        actions: bindActionCreators({
+            getConfig,
+            getEnvironmentConfig,
+            setNavigationBlocked,
+            deferNavigation,
+            cancelNavigation,
+            confirmNavigation,
+            loadRolesIfNeeded,
+            editRole,
+        }, dispatch),
     };
 }
 
-export default withRouter(
-    connect(
-        mapStateToProps,
-        mapDispatchToProps
-    )(AdminConsole)
-);
+export default withRouter(connect(mapStateToProps, mapDispatchToProps)(AdminConsole));

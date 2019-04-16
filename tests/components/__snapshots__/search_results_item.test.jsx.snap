@@ -43,6 +43,7 @@ exports[`components/SearchResultsItem should match snapshot for DM 1`] = `
       >
         <Connect(PostProfilePicture)
           compactDisplay={true}
+          isBusy={false}
           post={
             Object {
               "channel_id": "channel_id",
@@ -83,6 +84,7 @@ exports[`components/SearchResultsItem should match snapshot for DM 1`] = `
               <UserProfile
                 disablePopover={false}
                 hasMention={false}
+                isBusy={false}
                 isRHS={false}
                 overwriteImage=""
                 overwriteName=""
@@ -275,6 +277,7 @@ exports[`components/SearchResultsItem should match snapshot for archived channel
       >
         <Connect(PostProfilePicture)
           compactDisplay={true}
+          isBusy={false}
           post={
             Object {
               "channel_id": "channel_id",
@@ -315,6 +318,7 @@ exports[`components/SearchResultsItem should match snapshot for archived channel
               <UserProfile
                 disablePopover={false}
                 hasMention={false}
+                isBusy={false}
                 isRHS={false}
                 overwriteImage=""
                 overwriteName=""
@@ -498,6 +502,7 @@ exports[`components/SearchResultsItem should match snapshot for channel 1`] = `
       >
         <Connect(PostProfilePicture)
           compactDisplay={true}
+          isBusy={false}
           post={
             Object {
               "channel_id": "channel_id",
@@ -538,6 +543,7 @@ exports[`components/SearchResultsItem should match snapshot for channel 1`] = `
               <UserProfile
                 disablePopover={false}
                 hasMention={false}
+                isBusy={false}
                 isRHS={false}
                 overwriteImage=""
                 overwriteName=""
@@ -721,6 +727,7 @@ exports[`components/SearchResultsItem should match snapshot for deleted message 
       >
         <Connect(PostProfilePicture)
           compactDisplay={true}
+          isBusy={false}
           post={
             Object {
               "channel_id": "channel_id",
@@ -769,6 +776,7 @@ exports[`components/SearchResultsItem should match snapshot for deleted message 
               <UserProfile
                 disablePopover={true}
                 hasMention={false}
+                isBusy={false}
                 isRHS={false}
                 overwriteImage=""
                 overwriteName="overridden_username"

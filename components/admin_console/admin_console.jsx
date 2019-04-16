@@ -380,6 +380,14 @@ export default class AdminConsole extends React.Component {
                                         }}
                                     />
                                     <SCRoute
+                                        path={`${props.match.url}/webrtc`}
+                                        component={SchemaAdminSettings}
+                                        extraProps={{
+                                            ...extraProps,
+                                            schema: AdminDefinition.settings.integrations.webrtc.schema,
+                                        }}
+                                    />
+                                    <SCRoute
                                         path={`${props.match.url}/external`}
                                         component={SchemaAdminSettings}
                                         extraProps={{

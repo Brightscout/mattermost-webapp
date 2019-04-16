@@ -19,7 +19,7 @@ import {Client4} from 'mattermost-redux/client';
 import {getConfig} from 'mattermost-redux/selectors/entities/general';
 import {getCurrentTeamId} from 'mattermost-redux/selectors/entities/teams';
 import {getCurrentUserId} from 'mattermost-redux/selectors/entities/users';
-import {getCurrentChannel, getCurrentChannelStats} from 'mattermost-redux/selectors/entities/channels';
+import {getCurrentChannelStats} from 'mattermost-redux/selectors/entities/channels';
 
 import {browserHistory} from 'utils/browser_history';
 import {loadChannelsForCurrentUser} from 'actions/channel_actions.jsx';
@@ -50,16 +50,6 @@ import {equalServerVersions} from 'utils/server_version';
 
 const dispatch = store.dispatch;
 const getState = store.getState;
-
-export function getCurrentPage(match) {
-    console.log("using match:",  match);
-    if (match.params.path == 'pages') {
-        console.log("match returning", match.params.identifier)
-        return match.params.identifier;
-    } else {
-        return null;
-    }
-}
 
 export function emitChannelClickEvent(channel) {
     async function userVisitedFakeChannel(chan, success, fail) {

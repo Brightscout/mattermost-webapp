@@ -1,20 +1,26 @@
 // Copyright (c) 2015-present Mattermost, Inc. All Rights Reserved.
 // See LICENSE.txt for license information.
+
 import PropTypes from 'prop-types';
 import React from 'react';
 import {OverlayTrigger, Popover, Tooltip} from 'react-bootstrap';
 import {FormattedMessage} from 'react-intl';
 import {Permissions} from 'mattermost-redux/constants';
 import {memoizeResult} from 'mattermost-redux/utils/helpers';
-import {isChannelMuted} from 'mattermost-redux/utils/channel_utils';
-import {Link} from 'react-router-dom';
-import MaterialIcon from 'material-icons-react';
 
-import {createWebRtcLink} from 'utils/webrtc/webrtc';
-import * as Utils from 'utils/utils.jsx';
+import 'bootstrap';
+
+import {isChannelMuted} from 'mattermost-redux/utils/channel_utils';
+
 import * as GlobalActions from 'actions/global_actions.jsx';
+import * as WebrtcActions from 'actions/webrtc_actions.jsx';
+import WebrtcStore from 'stores/webrtc_store.jsx';
+import TeamStore from 'stores/team_store.jsx';
+
 import Markdown from 'components/markdown';
-import {Constants, NotificationLevels, RHSStates, ModalIdentifiers} from 'utils/constants.jsx';
+import {Constants, NotificationLevels, RHSStates, UserStatuses, ModalIdentifiers} from 'utils/constants.jsx';
+import * as Utils from 'utils/utils.jsx';
+import {browserHistory} from 'utils/browser_history';
 import ChannelInfoModal from 'components/channel_info_modal';
 import ChannelInviteModal from 'components/channel_invite_modal';
 import ChannelMembersModal from 'components/channel_members_modal';
@@ -36,12 +42,10 @@ import ArchiveIcon from 'components/svg/archive_icon';
 import ToggleModalButtonRedux from 'components/toggle_modal_button_redux';
 import ChannelPermissionGate from 'components/permissions_gates/channel_permission_gate';
 import TeamPermissionGate from 'components/permissions_gates/team_permission_gate';
-import PopoverStickOnHover from 'components/PopoverStickOnHover';
+
 import ChannelHeaderPlug from 'plugins/channel_header_plug';
 
 import HeaderIconWrapper from './components/header_icon_wrapper';
-
-import 'bootstrap';
 
 const headerMarkdownOptions = {singleline: true, mentionHighlight: false, atMentions: true};
 const popoverMarkdownOptions = {singleline: false, mentionHighlight: false, atMentions: true};
@@ -62,35 +66,27 @@ export default class ChannelHeader extends React.Component {
             openModal: PropTypes.func.isRequired,
             getCustomEmojisInText: PropTypes.func.isRequired,
             updateChannelNotifyProps: PropTypes.func.isRequired,
-            goToLastViewedChannel: PropTypes.func,
-            sendWebRtcMessage: PropTypes.func.isRequired,
         }).isRequired,
-
-        /**
-         * Current team object
-         */
-        currentTeam: PropTypes.object.isRequired,
-
         channel: PropTypes.object.isRequired,
         channelMember: PropTypes.object.isRequired,
-        channelStats: PropTypes.object,
         isFavorite: PropTypes.bool,
         isDefault: PropTypes.bool,
         currentUser: PropTypes.object.isRequired,
         dmUser: PropTypes.object,
+        dmUserStatus: PropTypes.object,
+        dmUserIsInCall: PropTypes.bool,
         isReadOnly: PropTypes.bool,
         rhsState: PropTypes.oneOf(
             Object.values(RHSStates)
         ),
+        lastViewedChannelName: PropTypes.string.isRequired,
         penultimateViewedChannelName: PropTypes.string.isRequired,
-        webRtcLink: PropTypes.shape({
-            pathname: PropTypes.string.isRequired,
-            href: PropTypes.string.isRequired,
-        }),
+        enableWebrtc: PropTypes.bool.isRequired,
     };
 
     static defaultProps = {
         dmUser: {},
+        dmUserStatus: {status: UserStatuses.OFFLINE},
     };
 
     constructor(props) {
@@ -104,6 +100,7 @@ export default class ChannelHeader extends React.Component {
             showMembersModal: false,
             showRenameChannelModal: false,
             showChannelNotificationsModal: false,
+            isBusy: WebrtcStore.isBusy(),
         };
 
         this.getHeaderMarkdownOptions = memoizeResult((channelNamesMap) => (
@@ -116,11 +113,15 @@ export default class ChannelHeader extends React.Component {
 
     componentDidMount() {
         this.props.actions.getCustomEmojisInText(this.props.channel.header);
+        WebrtcStore.addChangedListener(this.onWebrtcChange);
+        WebrtcStore.addBusyListener(this.onBusy);
         document.addEventListener('keydown', this.handleShortcut);
         window.addEventListener('resize', this.handleResize);
     }
 
     componentWillUnmount() {
+        WebrtcStore.removeChangedListener(this.onWebrtcChange);
+        WebrtcStore.removeBusyListener(this.onBusy);
         document.removeEventListener('keydown', this.handleShortcut);
         window.removeEventListener('resize', this.handleResize);
     }
@@ -137,6 +138,14 @@ export default class ChannelHeader extends React.Component {
         this.setState({showSearchBar: windowWidth > SEARCH_BAR_MINIMUM_WINDOW_SIZE});
     };
 
+    onWebrtcChange = () => {
+        this.setState({isBusy: WebrtcStore.isBusy()});
+    };
+
+    onBusy = (isBusy) => {
+        this.setState({isBusy});
+    };
+
     handleLeave = () => {
         if (this.props.channel.type === Constants.PRIVATE_CHANNEL) {
             GlobalActions.showLeavePrivateChannelModal(this.props.channel);
@@ -146,7 +155,8 @@ export default class ChannelHeader extends React.Component {
     };
 
     handleClose = () => {
-        this.props.actions.goToLastViewedChannel();
+        const {lastViewedChannelName} = this.props;
+        browserHistory.push(`${TeamStore.getCurrentTeamRelativeUrl()}/channels/${lastViewedChannelName}`);
     };
 
     toggleFavorite = () => {
@@ -248,6 +258,13 @@ export default class ChannelHeader extends React.Component {
         });
     };
 
+    initWebrtc = (contactId, isOnline) => {
+        if (isOnline && !this.state.isBusy) {
+            this.props.actions.closeRightHandSide();
+            WebrtcActions.initWebrtc(contactId, true);
+        }
+    };
+
     handleOnMouseOver = () => {
         if (this.refs.headerOverlay) {
             this.refs.headerOverlay.show();
@@ -282,6 +299,16 @@ export default class ChannelHeader extends React.Component {
 
     showEditChannelHeaderModal = () => {
         this.setState({showEditChannelHeaderModal: true});
+    };
+
+    handleWebRTCOnClick = (e) => {
+        e.preventDefault();
+        const dmUserId = this.props.dmUser.id;
+        const dmUserStatus = this.props.dmUserStatus.status;
+        const isOffline = dmUserStatus === UserStatuses.OFFLINE;
+        const isDoNotDisturb = dmUserStatus === UserStatuses.DND;
+
+        this.initWebrtc(dmUserId, !isOffline || !isDoNotDisturb);
     };
 
     showInviteModal = () => {
@@ -339,124 +366,6 @@ export default class ChannelHeader extends React.Component {
         );
     };
 
-    showMoreDirectChannelsModal = () => {
-    //    trackEvent('ui', 'ui_channels_more_direct');
-        this.setState({showDirectChannelsModal: true});
-    }
-
-    hideMoreDirectChannelsModal = () => {
-        this.setState({showDirectChannelsModal: false});
-    }
-
-    handleOpenMoreDirectChannelsModal = (e) => {
-        e.preventDefault();
-        if (this.state.showDirectChannelsModal) {
-            this.hideMoreDirectChannelsModal();
-        } else {
-            this.showMoreDirectChannelsModal();
-        }
-    }
-
-    makePostToSend = (channelId) => {
-        const time = Utils.getTimestamp();
-
-        const webRtcLink = createWebRtcLink(this.props.currentTeam.name, channelId);
-        const post = {
-            message: `I started a Riff meeting! Join here: ${webRtcLink.href}`,
-            channel_id: channelId,
-            pending_post_id: `${this.props.userId}:${time}`,
-            create_at: time,
-        };
-        return post;
-    }
-
-    webRtcDisabled = () => {
-        return (!this.props.channelStats ||
-                this.props.channelStats.member_count > 7);
-    }
-
-    renderWebRtc = (circleClass) => {
-        let tooltipContent = null;
-        if (!this.props.channelStats) {
-            tooltipContent = (
-                <span>
-                    {'Riff chat is disabled until the page fully loads.'}
-                </span>
-            );
-        } else if (this.props.channelStats.member_count > 7) {
-            tooltipContent = (
-                <span>
-                    {'Riff video chat only supports groups up to 7 people. Create a new DM group to start a call.'}
-                    <button
-                        className='add-channel-btn cursor--pointer btn-primary btn'
-                        style={{marginTop: '.5rem', marginBottom: '.5rem'}}
-                        onClick={this.handleOpenMoreDirectChannelsModal}
-                    >
-                        {'Start a new DM'}
-                    </button>
-                </span>
-            );
-        } else {
-            tooltipContent = (
-                <span>
-                    {'Start a Riff chat. Anyone in the channel will be able to join.'}
-                </span>
-            );
-        }
-
-        const webrtcTooltip = (
-            <div>
-                {tooltipContent}
-            </div>
-        );
-        return (
-            <div
-                className={'webrtc__header channel-header__icon wide text ' + circleClass}
-                style={{cursor: this.webRtcDisabled() ? 'default' : 'pointer'}}
-            >
-                <Link
-                    target='_blank'
-                    id='videochat'
-                    disabled={this.webRtcDisabled()}
-                    to={this.props.webRtcLink.pathname}
-                    onClick={() => {
-                        if (!this.webRtcDisabled()) {
-                            this.props.actions.sendWebRtcMessage(
-                                this.props.channel.id,
-                                this.props.currentUser.id,
-                                this.props.webRtcLink.href,
-                                this.props.currentTeam.name
-                            );
-                        }
-                    }}
-                >
-                    <PopoverStickOnHover
-                        component={webrtcTooltip}
-                        placement='bottom'
-                        delay={Constants.WEBRTC_TIME_DELAY}
-                    >
-                        <button
-                            className='style--none'
-                            disabled={this.webRtcDisabled()}//{isOffline || isDoNotDisturb}
-                        >
-                            <div
-                                id='webrtc-btn'
-                                className={'webrtc__button hidden-xs ' + circleClass}
-                            >
-                                <span
-                                    className='icon icon__members'
-                                    aria-label='Start a voice chat'
-                                >
-                                    <MaterialIcon icon='voice_chat'/>
-                                </span>
-                            </div>
-                        </button>
-                    </PopoverStickOnHover>
-                </Link>
-            </div>
-        );
-    }
-
     render() {
         const channelIsArchived = this.props.channel.delete_at !== 0;
         if (Utils.isEmptyObject(this.props.channel) ||
@@ -499,23 +408,12 @@ export default class ChannelHeader extends React.Component {
 
         const channelMuted = isChannelMuted(this.props.channelMember);
 
-        const teamId = this.props.channel.team_id;
-
-        const webrtc = this.renderWebRtc('', // first arg is circleClass (online or '')
-        );
-
-        let moreDirectChannelsModal;
-        if (this.state.showDirectChannelsModal) {
-            moreDirectChannelsModal = (
-                <MoreDirectChannels
-                    onModalDismissed={this.hideMoreDirectChannelsModal}
-                    isExistingChannel={false}
-                    makePostToSend={this.makePostToSend}
-                />
-            );
-        }
+        const teamId = TeamStore.getCurrentId();
+        let webrtc;
 
         if (isDirect) {
+            const dmUserStatus = this.props.dmUserStatus.status;
+
             const teammateId = Utils.getUserIdFromChannelName(channel);
             if (this.props.currentUser.id === teammateId) {
                 channelTitle = (
@@ -529,6 +427,78 @@ export default class ChannelHeader extends React.Component {
                 );
             } else {
                 channelTitle = Utils.getDisplayNameByUserId(teammateId) + ' ';
+            }
+
+            const webrtcEnabled = this.props.enableWebrtc && Utils.isUserMediaAvailable();
+
+            if (webrtcEnabled && this.props.currentUser.id !== teammateId) {
+                const isOffline = dmUserStatus === UserStatuses.OFFLINE;
+                const isDoNotDisturb = dmUserStatus === UserStatuses.DND;
+                const busy = this.props.dmUserIsInCall;
+                let circleClass = '';
+                let webrtcMessage;
+
+                if (isOffline || isDoNotDisturb || busy) {
+                    circleClass = 'offline';
+
+                    if (isOffline) {
+                        webrtcMessage = (
+                            <FormattedMessage
+                                id='channel_header.webrtc.offline'
+                                defaultMessage='The user is offline'
+                            />
+                        );
+                    } else if (isDoNotDisturb) {
+                        webrtcMessage = (
+                            <FormattedMessage
+                                id='channel_header.webrtc.doNotDisturb'
+                                defaultMessage='Do not disturb'
+                            />
+                        );
+                    } else if (busy) {
+                        webrtcMessage = (
+                            <FormattedMessage
+                                id='channel_header.webrtc.unavailable'
+                                defaultMessage='New call unavailable until your existing call ends'
+                            />
+                        );
+                    }
+                } else {
+                    webrtcMessage = (
+                        <FormattedMessage
+                            id='channel_header.webrtc.call'
+                            defaultMessage='Start Video Call'
+                        />
+                    );
+                }
+
+                const webrtcTooltip = (
+                    <Tooltip id='webrtcTooltip'>{webrtcMessage}</Tooltip>
+                );
+
+                webrtc = (
+                    <div className={'webrtc__header channel-header__icon wide text ' + circleClass}>
+                        <button
+                            className='style--none'
+                            onClick={this.handleWebRTCOnClick}
+                            disabled={isOffline || isDoNotDisturb}
+                        >
+                            <OverlayTrigger
+                                trigger={['hover', 'focus']}
+                                delayShow={Constants.WEBRTC_TIME_DELAY}
+                                placement='bottom'
+                                overlay={webrtcTooltip}
+                            >
+                                <div
+                                    id='webrtc-btn'
+                                    className={'webrtc__button hidden-xs ' + circleClass}
+                                >
+                                    {'WebRTC'}
+                                </div>
+                            </OverlayTrigger>
+                        </button>
+                    </div>
+                );
             }
         }
 
@@ -1161,7 +1131,6 @@ export default class ChannelHeader extends React.Component {
                 id='channel-header'
                 className='channel-header alt'
             >
-                {moreDirectChannelsModal}
                 <div className='flex-parent'>
                     <div className='flex-child'>
                         <div

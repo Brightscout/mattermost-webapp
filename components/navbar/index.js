@@ -5,6 +5,7 @@ import {connect} from 'react-redux';
 import {bindActionCreators} from 'redux';
 
 import {updateChannelNotifyProps} from 'mattermost-redux/actions/channels';
+import {getConfig} from 'mattermost-redux/selectors/entities/general';
 import {isCurrentChannelReadOnly} from 'mattermost-redux/selectors/entities/channels';
 
 import {
@@ -21,10 +22,14 @@ import {RHSStates} from 'utils/constants.jsx';
 import Navbar from './navbar.jsx';
 
 function mapStateToProps(state) {
+    const config = getConfig(state);
+    const enableWebrtc = config.EnableWebrtc === 'true';
+
     const rhsState = getRhsState(state);
 
     return {
         isPinnedPosts: rhsState === RHSStates.PIN,
+        enableWebrtc,
         isReadOnly: isCurrentChannelReadOnly(state),
     };
 }

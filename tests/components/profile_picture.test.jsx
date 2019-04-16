@@ -10,6 +10,7 @@ describe('components/ProfilePicture', () => {
     const baseProps = {
         src: 'http://example.com/image.png',
         status: 'away',
+        isBusy: true,
     };
 
     test('should match snapshot, no user specified, default props', () => {

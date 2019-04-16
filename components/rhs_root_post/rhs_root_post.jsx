@@ -40,6 +40,7 @@ export default class RhsRootPost extends React.Component {
         status: PropTypes.string,
         previewCollapsed: PropTypes.string,
         previewEnabled: PropTypes.bool,
+        isBusy: PropTypes.bool,
         isEmbedVisible: PropTypes.bool,
         enableEmojiPicker: PropTypes.bool.isRequired,
         enablePostUsernameOverride: PropTypes.bool.isRequired,
@@ -65,6 +66,10 @@ export default class RhsRootPost extends React.Component {
 
     shouldComponentUpdate(nextProps, nextState) {
         if (nextProps.status !== this.props.status) {
+            return true;
+        }
+
+        if (nextProps.isBusy !== this.props.isBusy) {
             return true;
         }
 
@@ -255,7 +260,12 @@ export default class RhsRootPost extends React.Component {
             userProfile = (
                 <UserProfile
                     user={{}}
-                    overwriteName={Constants.SYSTEM_BRAND_NAME}
+                    overwriteName={
+                        <FormattedMessage
+                            id='post_info.system'
+                            defaultMessage='System'
+                        />
+                    }
                     overwriteImage={Constants.SYSTEM_MESSAGE_PROFILE_IMAGE}
                     disablePopover={true}
                 />
@@ -284,6 +294,7 @@ export default class RhsRootPost extends React.Component {
                 <UserProfile
                     user={user}
                     status={this.props.status}
+                    isBusy={this.props.isBusy}
                     isRHS={true}
                     hasMention={true}
                 />
@@ -352,6 +363,7 @@ export default class RhsRootPost extends React.Component {
                     <div className='post__img'>
                         <PostProfilePicture
                             compactDisplay={this.props.compactDisplay}
+                            isBusy={this.props.isBusy}
                             isRHS={true}
                             post={post}
                             status={this.props.status}

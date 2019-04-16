@@ -5,7 +5,7 @@ import PropTypes from 'prop-types';
 import React from 'react';
 
 import ProfilePicture from 'components/profile_picture';
-import {RiffLogo} from 'components/common/riff_logo';
+import MattermostLogo from 'components/svg/mattermost_logo';
 
 import Constants from 'utils/constants';
 import * as PostUtils from 'utils/post_utils';
@@ -16,6 +16,7 @@ export default class PostProfilePicture extends React.PureComponent {
         compactDisplay: PropTypes.bool.isRequired,
         enablePostIconOverride: PropTypes.bool.isRequired,
         hasImageProxy: PropTypes.bool.isRequired,
+        isBusy: PropTypes.bool,
         isRHS: PropTypes.bool,
         post: PropTypes.object.isRequired,
         status: PropTypes.string,
@@ -59,7 +60,7 @@ export default class PostProfilePicture extends React.PureComponent {
         const isSystemMessage = PostUtils.isSystemMessage(this.props.post);
         const fromWebhook = PostUtils.isFromWebhook(this.props.post);
         if (isSystemMessage && !this.props.compactDisplay && !fromWebhook) {
-            return <RiffLogo/>;
+            return <MattermostLogo className='icon'/>;
         }
 
         const fromAutoResponder = PostUtils.fromAutoResponder(this.props.post);
@@ -71,6 +72,7 @@ export default class PostProfilePicture extends React.PureComponent {
         return (
             <ProfilePicture
                 hasMention={hasMention}
+                isBusy={this.props.isBusy}
                 isRHS={this.props.isRHS}
                 src={src}
                 status={status}

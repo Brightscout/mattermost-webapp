@@ -6,7 +6,8 @@ import {Modal} from 'react-bootstrap';
 import {FormattedMessage, injectIntl, intlShape} from 'react-intl';
 import PropTypes from 'prop-types';
 
-import Constants from 'utils/constants.jsx';
+import WebrtcStore from 'stores/webrtc_store.jsx';
+import Constants, {WebrtcActionTypes} from 'utils/constants.jsx';
 import {isKeyPressed} from 'utils/utils';
 
 class LeaveTeamModal extends React.PureComponent {
@@ -33,6 +34,12 @@ class LeaveTeamModal extends React.PureComponent {
          */
 
         show: PropTypes.bool.isRequired,
+
+        /**
+         * is the user busy in a video call
+         */
+
+        isBusy: PropTypes.bool.isRequired,
 
         intl: intlShape.isRequired,
 
@@ -68,8 +75,14 @@ class LeaveTeamModal extends React.PureComponent {
         }
     };
 
-    handleSubmit = () => {
+    handleSubmit = (e) => {
         this.props.onHide();
+
+        if (this.props.isBusy) {
+            WebrtcStore.emitChanged({action: WebrtcActionTypes.IN_PROGRESS});
+            e.preventDefault();
+            return;
+        }
         this.props.actions.removeUserFromTeam(this.props.currentTeamId, this.props.currentUserId);
         this.props.actions.toggleSideBarRightMenu();
     };

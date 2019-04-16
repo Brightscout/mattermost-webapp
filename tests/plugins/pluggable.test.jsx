@@ -22,6 +22,7 @@ describe('plugins/Pluggable', () => {
         entities: {
             general: {
                 config: {
+                    EnableWebrtc: 'true',
                 },
             },
             teams: {

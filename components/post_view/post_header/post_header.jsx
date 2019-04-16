@@ -49,6 +49,11 @@ export default class PostHeader extends React.PureComponent {
         status: PropTypes.string,
 
         /*
+         * Set if the post creator is currenlty in a WebRTC call
+         */
+        isBusy: PropTypes.bool,
+
+        /*
          * The number of replies in the same thread as this post
          */
         replyCount: PropTypes.number,
@@ -95,6 +100,7 @@ export default class PostHeader extends React.PureComponent {
                 user={this.props.user}
                 displayNameType={this.props.displayNameType}
                 status={this.props.status}
+                isBusy={this.props.isBusy}
                 hasMention={true}
             />
         );
@@ -134,6 +140,7 @@ export default class PostHeader extends React.PureComponent {
                     user={this.props.user}
                     displayNameType={this.props.displayNameType}
                     status={this.props.status}
+                    isBusy={this.props.isBusy}
                     hasMention={true}
                 />
             );
@@ -150,7 +157,12 @@ export default class PostHeader extends React.PureComponent {
             userProfile = (
                 <UserProfile
                     user={{}}
-                    overwriteName={Constants.SYSTEM_BRAND_NAME}
+                    overwriteName={
+                        <FormattedMessage
+                            id='post_info.system'
+                            defaultMessage='System'
+                        />
+                    }
                     overwriteImage={Constants.SYSTEM_MESSAGE_PROFILE_IMAGE}
                     disablePopover={true}
                 />

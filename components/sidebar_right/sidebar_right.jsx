@@ -8,6 +8,7 @@ import classNames from 'classnames';
 import {trackEvent} from 'actions/diagnostics_actions.jsx';
 import {postListScrollChange} from 'actions/global_actions.jsx';
 import PostStore from 'stores/post_store.jsx';
+import WebrtcStore from 'stores/webrtc_store.jsx';
 import Constants from 'utils/constants.jsx';
 import * as Utils from 'utils/utils.jsx';
 import FileUploadOverlay from 'components/file_upload_overlay.jsx';
@@ -138,6 +139,7 @@ export default class SidebarRight extends React.Component {
                     <div className='search-bar__container channel-header alt'>{searchForm}</div>
                     <RhsThread
                         previousRhsState={previousRhsState}
+                        isWebrtc={WebrtcStore.isBusy()}
                         currentUser={currentUser}
                         toggleSize={this.toggleSize}
                         shrink={this.onShrink}
