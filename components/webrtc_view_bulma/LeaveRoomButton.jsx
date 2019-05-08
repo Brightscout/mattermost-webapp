@@ -7,6 +7,8 @@ import {connect} from 'react-redux';
 import MaterialIcon from 'material-icons-react';
 import {getCurrentUser} from 'mattermost-redux/selectors/entities/users';
 
+import {sendSurvey} from 'actions/survey_actions.jsx';
+
 const mapStateToProps = (state) => ({
     meetingId: state.views.riff.meetingId,
     uid: getCurrentUser(state).id,
@@ -25,6 +27,7 @@ const mapMergeProps = (stateProps, dispatchProps, ownProps) => ({
         ownProps.leaveRoom();
         ownProps.webrtc.leaveRoom();
         // ownProps.webrtc.leaveRoomstopSibilant();
+        sendSurvey(stateProps.uid, stateProps.meetingId);
     },
 });
 

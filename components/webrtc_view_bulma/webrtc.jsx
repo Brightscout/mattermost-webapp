@@ -12,6 +12,8 @@
 import React, {Component} from 'react';
 import ReactDOM from 'react-dom';
 
+import {sendSurvey} from 'actions/survey_actions.jsx';
+
 import {addA11yBrowserAlert, readablePeers, logger} from 'utils/riff';
 import webrtc from 'utils/webrtc/webrtc';
 import store from 'stores/redux_store';
@@ -61,6 +63,9 @@ class WebRtc extends Component {
     onUnload(/*event*/) {
         // unload event...
         // we previously left the riff room
+        if (this.props.inRoom) {
+            sendSurvey(this.props.user.id, this.props.riff.meetingId);
+        }
     }
 
     reattachVideo(video) {
