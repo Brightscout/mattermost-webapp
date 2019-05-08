@@ -24,7 +24,7 @@ const mapMergeProps = (stateProps, dispatchProps, ownProps) => ({
         ownProps.leaveRiffRoom(stateProps.meetingId, stateProps.uid);
         ownProps.leaveRoom();
         ownProps.webrtc.leaveRoom();
-        ownProps.webrtc.stopSibilant();
+        // ownProps.webrtc.leaveRoomstopSibilant();
     },
 });
 

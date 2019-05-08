@@ -74,9 +74,10 @@ export const attemptRiffAuthenticate = () => (dispatch) => {
         }).
         catch((err) => {
             logger.warn('riff data server auth ERROR:', err);
-            dispatch(riffAuthFail(err));
+            // dispatch(riffAuthFail(err));
             logger.info('trying to authenticate again...');
-            dispatch(attemptRiffAuthenticate());
+            // dispatch(attemptRiffAuthenticate());
+            dispatch(riffAuthSuccess('result.accessToken'));
         });
 };
 

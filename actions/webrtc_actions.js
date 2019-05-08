@@ -67,14 +67,15 @@ export const handleReadyClick = (event, props, webrtc) => (dispatch) => {
             props.riff.authToken
         );
         dispatch(joinRoom(webRtcRoom));
-        webrtc.stopVolumeCollection();
+        // webrtc.stopVolumeCollection();
         webrtc.joinRoom(webRtcRoom, (/*err, rd*/) => {
-            dispatch(joinedRoom(webRtcRoom));
 
-            //reset audio
-            dispatch(unmuteAudio());
-            webrtc.unmute();
         });
+        dispatch(joinedRoom(webRtcRoom));
+
+        //reset audio
+        dispatch(unmuteAudio());
+        webrtc.unmute();
     }
 };
 
