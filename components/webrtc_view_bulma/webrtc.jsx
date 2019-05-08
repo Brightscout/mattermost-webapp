@@ -63,9 +63,10 @@ class WebRtc extends Component {
     onUnload(/*event*/) {
         // unload event...
         // we previously left the riff room
-        if (this.props.inRoom) {
-            sendSurvey(this.props.user.id, this.props.riff.meetingId);
-        }
+        sendSurvey(this.props.user.id, this.props.riff.meetingId);
+        // if (this.props.inRoom) {
+        //     sendSurvey(this.props.user.id, this.props.riff.meetingId);
+        // }
     }
 
     reattachVideo(video) {
