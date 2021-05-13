@@ -464,7 +464,6 @@ const AdminDefinition = {
             title: t('admin.sidebar.teams'),
             title_default: 'Teams',
             isHidden: it.any(
-                it.not(it.licensedForFeature('LDAPGroups')),
                 it.not(it.userHasReadPermissionOnResource('user_management.teams')),
             ),
             schema: {
@@ -485,7 +484,6 @@ const AdminDefinition = {
             title: t('admin.sidebar.channels'),
             title_default: 'Channels',
             isHidden: it.any(
-                it.not(it.licensedForFeature('LDAPGroups')),
                 it.not(it.userHasReadPermissionOnResource('user_management.channels')),
             ),
             isDisabled: it.not(it.userHasWritePermissionOnResource('user_management.channels')),
